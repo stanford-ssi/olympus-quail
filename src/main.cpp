@@ -20,18 +20,18 @@ void setup() {
   pinMode(LED_D2, OUTPUT);
   pinMode(LED_D3, OUTPUT);
 
-  nitrousLine.initializeSensor(Pressure_1);
-  nitrousHeatXger.initializeSensor(Pressure_2);
-  nitrogenLine.initializeSensor(Pressure_3);
-  oxidizerTank.initializeSensor(Pressure_4);
-  combustionChamber.initializeSensor(Pressure_5);
+  TransducerArray[0].initializeSensor(Pressure_1);
+  TransducerArray[1].initializeSensor(Pressure_2);
+  TransducerArray[2].initializeSensor(Pressure_3);
+  TransducerArray[3].initializeSensor(Pressure_4);
+  TransducerArray[4].initializeSensor(Pressure_5);
 
-  oxidizerTankVent.initializeSolenoid(Solenoid_1);
-  nitrogenFill.initializeSolenoid(Solenoid_2);
-  nitrousFill.initializeSolenoid(Solenoid_3);
-  nitrousAbort.initializeSolenoid(Solenoid_4);
-  nitrogenAbort.initializeSolenoid(Solenoid_5);
-  pyrovalveShutOff.initializeSolenoid(Solenoid_6);
+  SolenoidArray[0].initializeSolenoid(Solenoid_1);
+  SolenoidArray[1].initializeSolenoid(Solenoid_2);
+  SolenoidArray[2].initializeSolenoid(Solenoid_3);
+  SolenoidArray[3].initializeSolenoid(Solenoid_4);
+  SolenoidArray[4].initializeSolenoid(Solenoid_5);
+  SolenoidArray[5].initializeSolenoid(Solenoid_6);
 
 
   Serial.begin(9600);
@@ -87,9 +87,16 @@ void loop() {
       
       if(deviceNumber>=1 && deviceNumber<7 )
       {
-        SolenoidArray[deviceNumber-1].openSolenoid();
+        if(SolenoidArray[deviceNumber-1].openSolenoid())
+        {     
         Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
         Serial.println(SolenoidArray[deviceNumber-1].getSolenoidStatus());
+        }
+        else
+        {
+          Serial.println("Failed to Open Solenoid??");
+        }
+        
       }
       else
       {

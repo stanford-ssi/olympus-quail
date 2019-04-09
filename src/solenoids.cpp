@@ -11,20 +11,22 @@
         pinMode(this->solenoid_number, OUTPUT);
     };   
     
-    void Solenoids::openSolenoid()
+    int Solenoids::openSolenoid()
     {
         // Need to add Initital Pulse around a millisecond to open solenoid
         //digitalWrite(this->solenoid_number, HIGH);
         //delay(35);
         analogWrite(this->solenoid_number, (int)100); // PWM ~12% 30/255
         isOpen          = true;
+        return 1; 
 
     };
 
-    void Solenoids::closeSolenoid()
+    int Solenoids::closeSolenoid()
     {
         analogWrite(this->solenoid_number, (int)0);
         isOpen          = false;
+        return 1;
     };
 
     bool Solenoids::getSolenoidStatus()

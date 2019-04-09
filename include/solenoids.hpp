@@ -14,9 +14,12 @@ class Solenoids
 
     void initializeSolenoid(uint8_t solenoid_number); 
 
-    void openSolenoid();
 
-    void closeSolenoid();
+    // returns 1 if it does the thing
+    int openSolenoid();
+
+    // returns 1 if it does the thing
+    int closeSolenoid();
 
     bool getSolenoidStatus();
 
