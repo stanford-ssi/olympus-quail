@@ -8,7 +8,7 @@
 Solenoids oxidizerTankVent, nitrogenFill, nitrousFill, nitrousAbort, nitrogenAbort, pyrovalveShutOff;
 PressureSensor nitrousLine, nitrousHeatXger, nitrogenLine, oxidizerTank, combustionChamber;
 File dataFile;
-uint16_t data;
+double data;
 
 Solenoids SolenoidArray[]          = {oxidizerTankVent, nitrogenFill, nitrousFill, nitrousAbort, nitrogenAbort, pyrovalveShutOff}; // J12, J13, J15, J16, J19, J20
 PressureSensor TransducerArray[]   = {nitrousLine, nitrousHeatXger, nitrogenLine, oxidizerTank, combustionChamber}; 
@@ -38,13 +38,14 @@ void setup() {
   Serial.println("Setup done");
   //digitalWrite(LED_D2, HIGH);
   digitalWrite(LED_D3, HIGH);
-  delay(10);
+  delay(1000);
 
   Serial.print("Initializing SD card...");
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
   pinMode(SD_Card_SS, OUTPUT);
-  
+  digitalWrite(LED_D2,HIGH);
+  digitalWrite(LED_D3,LOW);
   // see if the card is present and can be initialized:
   if (!SD.begin(SD_Card_SS, SD_Card_MOSI, SD_Card_MISO, SD_Card_SCK)) {
     Serial.println("Card failed, or not present");
@@ -53,15 +54,23 @@ void setup() {
   }
   Serial.println("card initialized.");
   
+  digitalWrite(LED_D2,HIGH);
+  digitalWrite(LED_D3,LOW);
+
   // Open up the file we're going to log to!
-  dataFile = SD.open("datalog.txt", FILE_WRITE);
-  if (! dataFile) {
+  dataFile = SD.open("datalog-5-10-19.txt", FILE_WRITE);
+  if (!dataFile) {
     Serial.println("error opening datalog.txt");
     // Wait forever since we cant write data
-    while (1) ;
+     while (!dataFile) {
+        Serial.println("error opening datalog.txt");
+        delay(500);
+        dataFile = SD.open("datalog-5-10-19.txt", FILE_WRITE);
+
+     }
   }
   dataFile.println("Data logging for Quail has begun yeet");
-
+  
 }
 
 void loop() {
@@ -111,7 +120,7 @@ void loop() {
       while(!Serial.available()>0);
       deviceNumber = Serial.read() - '0';
 
-      if(deviceNumber>=1 && deviceNumber<6 )
+      if(deviceNumber>=1 && deviceNumber<7 )
       {
         SolenoidArray[deviceNumber-1].closeSolenoid();
         Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
@@ -144,6 +153,15 @@ void loop() {
     }
     Serial.print("Please Type Command:");
   }
+
+
+
+
+
+
+
+
+
   dataFile.flush();
 
   /*

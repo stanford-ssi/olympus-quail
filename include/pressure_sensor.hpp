@@ -6,12 +6,12 @@ class PressureSensor
     private:
 
     uint16_t sensor_number;
-    uint16_t scaler = 1;
+    double scaler;
 
     public:
 
     void initializeSensor(uint16_t sensor_number); 
 
-    int readSensor();
+    double readSensor();
 
 };

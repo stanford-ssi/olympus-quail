@@ -16,7 +16,7 @@
         // Need to add Initital Pulse around a millisecond to open solenoid
         //digitalWrite(this->solenoid_number, HIGH);
         //delay(35);
-        analogWrite(this->solenoid_number, (int)100); // PWM ~12% 30/255
+        analogWrite(this->solenoid_number, (int)250); // PWM ~12% 30/255
         isOpen          = true;
         return 1; 
 

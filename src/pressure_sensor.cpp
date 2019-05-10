@@ -10,9 +10,13 @@
         pinMode(this->sensor_number, INPUT);
     }; 
 
-    int PressureSensor::readSensor()
+    double PressureSensor::readSensor()
     {
-        return analogRead(this->sensor_number)/(this->scaler);
+        //return ((double)(analogRead(this->sensor_number))*(2*3.3/1023)-.5)*(this->scaler);
+
+        return ((double)(analogRead(this->sensor_number)))*((2*3.3/1023)-.5)*(this->scaler);
+
+
     };
 
 
