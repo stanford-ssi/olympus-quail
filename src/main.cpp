@@ -14,6 +14,7 @@ Solenoids SolenoidArray[]          = {oxidizerTankVent, nitrogenFill, nitrousFil
 PressureSensor TransducerArray[]   = {nitrousLine, nitrousHeatXger, nitrogenLine, oxidizerTank, combustionChamber}; 
 
 
+
 void setup() {
   // put your setup code here, to run once:
   //pinMode(Solenoid_1, OUTPUT);
@@ -58,7 +59,7 @@ void setup() {
   digitalWrite(LED_D3,LOW);
 
   // Open up the file we're going to log to!
-  dataFile = SD.open("datalog-5-10-19.txt", FILE_WRITE);
+  dataFile = SD.open("datalog.txt", FILE_WRITE);
   if (!dataFile) {
     Serial.println("error opening datalog.txt");
     // Wait forever since we cant write data
