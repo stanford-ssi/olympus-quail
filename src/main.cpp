@@ -27,12 +27,12 @@ void setup() {
   TransducerArray[3].initializeSensor(Pressure_4);
   TransducerArray[4].initializeSensor(Pressure_5);
 
-  SolenoidArray[0].initializeSolenoid(Solenoid_1);
-  SolenoidArray[1].initializeSolenoid(Solenoid_2);
-  SolenoidArray[2].initializeSolenoid(Solenoid_3);
-  SolenoidArray[3].initializeSolenoid(Solenoid_4);
-  SolenoidArray[4].initializeSolenoid(Solenoid_5);
-  SolenoidArray[5].initializeSolenoid(Solenoid_6);
+  SolenoidArray[0].initializeSolenoid(Solenoid_1, MEDIUM);
+  SolenoidArray[1].initializeSolenoid(Solenoid_2, MEDIUM);
+  SolenoidArray[2].initializeSolenoid(Solenoid_3, LARGE);
+  SolenoidArray[3].initializeSolenoid(Solenoid_4, SMALL);
+  SolenoidArray[4].initializeSolenoid(Solenoid_5, SMALL);
+  SolenoidArray[5].initializeSolenoid(Solenoid_6, SMALL);
 
 
   Serial.begin(9600);
@@ -147,6 +147,30 @@ void loop() {
     {
       //Test SD Card data
       dataFile.println("The test Worked yeeeet");
+    }
+     else if(functionNumber == 5)
+    {
+      Serial.println("Which Solenoid would you like to Pulse?:");
+      while(!Serial.available()>0);
+      deviceNumber = Serial.read() - '0';
+      
+      if(deviceNumber>=1 && deviceNumber<7 )
+      {
+        if(SolenoidArray[deviceNumber-1].pulseSolenoid())
+        {     
+        Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
+        Serial.println(SolenoidArray[deviceNumber-1].getSolenoidStatus());
+        }
+        else
+        {
+          Serial.println("Failed to Pulse Solenoid??");
+        }
+        
+      }
+      else
+      {
+        Serial.println("Invalid Device number");
+      }
     }
     else
     {
