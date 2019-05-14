@@ -1,207 +1,146 @@
 #include <Arduino.h>
 #include <pin_interface.h>
-#include <solenoids.hpp>
-#include <pressure_sensor.hpp>
-#include  "SD.h"
+#include "MC33797.h"
+#include <SPI.h>
+#include "wiring_private.h"
 
+const int slaveSelectPin = 10;
 
-Solenoids oxidizerTankVent, nitrogenFill, nitrousFill, nitrousAbort, nitrogenAbort, pyrovalveShutOff;
-PressureSensor nitrousLine, nitrousHeatXger, nitrogenLine, oxidizerTank, combustionChamber;
-File dataFile;
-double data;
+SPIClass squibSPI (&sercom0, Squib_MISO, Squib_SCK, Squib_MOSI,
+                   SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2);
 
-Solenoids SolenoidArray[]          = {oxidizerTankVent, nitrogenFill, nitrousFill, nitrousAbort, nitrogenAbort, pyrovalveShutOff}; // J12, J13, J15, J16, J19, J20
-PressureSensor TransducerArray[]   = {nitrousLine, nitrousHeatXger, nitrogenLine, oxidizerTank, combustionChamber}; 
-
-
-
-void setup() {
-  // put your setup code here, to run once:
-  //pinMode(Solenoid_1, OUTPUT);
-  pinMode(LED_D2, OUTPUT);
-  pinMode(LED_D3, OUTPUT);
-
-  TransducerArray[0].initializeSensor(Pressure_1);
-  TransducerArray[1].initializeSensor(Pressure_2);
-  TransducerArray[2].initializeSensor(Pressure_3);
-  TransducerArray[3].initializeSensor(Pressure_4);
-  TransducerArray[4].initializeSensor(Pressure_5);
-
-  SolenoidArray[0].initializeSolenoid(Solenoid_1, MEDIUM);
-  SolenoidArray[1].initializeSolenoid(Solenoid_2, MEDIUM);
-  SolenoidArray[2].initializeSolenoid(Solenoid_3, LARGE);
-  SolenoidArray[3].initializeSolenoid(Solenoid_4, SMALL);
-  SolenoidArray[4].initializeSolenoid(Solenoid_5, SMALL);
-  SolenoidArray[5].initializeSolenoid(Solenoid_6, SMALL);
-
-
+void setup()
+{
   Serial.begin(9600);
-  Serial.println("Setup done");
-  //digitalWrite(LED_D2, HIGH);
-  digitalWrite(LED_D3, HIGH);
-  delay(1000);
+  pinPeripheral(Squib_MISO, PIO_SERCOM_ALT);
+  pinPeripheral(Squib_SCK, PIO_SERCOM_ALT);
+  pinPeripheral(Squib_MOSI, PIO_SERCOM_ALT);
 
-  Serial.print("Initializing SD card...");
-  // make sure that the default chip select pin is set to
-  // output, even if you don't use it:
-  pinMode(SD_Card_SS, OUTPUT);
-  digitalWrite(LED_D2,HIGH);
-  digitalWrite(LED_D3,LOW);
-  // see if the card is present and can be initialized:
-  if (!SD.begin(SD_Card_SS, SD_Card_MOSI, SD_Card_MISO, SD_Card_SCK)) {
-    Serial.println("Card failed, or not present");
-    // don't do anything more:
-    while (1) ;
-  }
-  Serial.println("card initialized.");
+  pinMode(Squib_SS_1, OUTPUT);
+  pinMode(Squib_SS_2, OUTPUT);
+  digitalWrite(Squib_SS_1, HIGH);
+  digitalWrite(Squib_SS_2, HIGH);
+  squibSPI.begin();
+
+  delay(3000);
+
+  // Doesn't work for some reason: seems to only return back the command that was sent to it
+  // > send 0x96, receive 0xC8
+  // > send 0xC8, receive 0x96
+  // > send 0x96, receive 0xC8
+  // > etc...
+
+  // only returns 0x96 over and over (because that is the command sent)
+  // while (true) {
+    // delay(100);
+    // uint8_t send = 0x96;
+    // uint8_t recv = 0x00;
+    // squibSPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
+    // digitalWrite(Squib_SS_2, LOW);
+    // recv = squibSPI.transfer(send);
+    // squibSPI.endTransaction();
+    // digitalWrite(Squib_SS_2, HIGH);
+// 
+    // Serial.print("Squib Response: 0x");
+    // Serial.println(recv, HEX);
+    // Serial.println(recv == 0x69);
+    // Serial.println();
+  // }
+
   
-  digitalWrite(LED_D2,HIGH);
-  digitalWrite(LED_D3,LOW);
 
-  // Open up the file we're going to log to!
-  dataFile = SD.open("datalog.txt", FILE_WRITE);
-  if (!dataFile) {
-    Serial.println("error opening datalog.txt");
-    // Wait forever since we cant write data
-     while (!dataFile) {
-        Serial.println("error opening datalog.txt");
-        delay(500);
-        dataFile = SD.open("datalog-5-10-19.txt", FILE_WRITE);
 
-     }
-  }
-  dataFile.println("Data logging for Quail has begun yeet");
   
+  uint8_t ret = Squib_Init(2);
+  // while (ret > 0) {
+    // delay(100);
+    // ret = Squib_Init(2);
+    // Serial.println();
+  // }
+  Serial.print("Squib 2 Init: ");
+  Serial.println(ret);
+
+  delay(2000);
+
+  ret = Squib_Init(1);
+  while (ret > 0) {
+    delay(100);
+    ret = Squib_Init(1);
+    Serial.println();
+  }
+  Serial.print("Squib 1 Init: ");
+  Serial.println(ret);
+
+  Serial.println();
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
- 
-  int functionNumber  =  -1;
-  int deviceNumber =-1;
+void loop()
+{
+  delay(1000);
 
-  if (Serial.available() > 0)
-  {
-    functionNumber = Serial.read() - '0';
-     /*
-      subtract 1 from the recipe number to get the index in the array
-    */ 
-    Serial.println("");
-   
-    if(functionNumber == 1)
-    {
-      // Function 1 OPENS Solenoid and prints status
-      Serial.println("Which Solenoid would you like to Open?:");
-      while(!Serial.available()>0);
-      deviceNumber = Serial.read() - '0';
-      
-      if(deviceNumber>=1 && deviceNumber<7 )
-      {
-        if(SolenoidArray[deviceNumber-1].openSolenoid())
-        {     
-        Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
-        Serial.println(SolenoidArray[deviceNumber-1].getSolenoidStatus());
-        }
-        else
-        {
-          Serial.println("Failed to Open Solenoid??");
-        }
-        
-      }
-      else
-      {
-        Serial.println("Invalid Device number");
-      }
+  Squib_StatusType *s = new Squib_StatusType();
 
-      }
-    else if(functionNumber == 2)
-    {
-      // Function 2 CLOSES Solenoid and prints status
-      Serial.println("Which Solenoid would you like to Close?:");
-      while(!Serial.available()>0);
-      deviceNumber = Serial.read() - '0';
+  uint8_t ret;
 
-      if(deviceNumber>=1 && deviceNumber<7 )
-      {
-        SolenoidArray[deviceNumber-1].closeSolenoid();
-        Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
-        Serial.println(nitrousFill.getSolenoidStatus());
-      }
-      else
-      {
-        Serial.println("Invalid Device number");
-      }
-      
-    }
-    else if(functionNumber == 3)
-    {
-      // Function 3 READS & LOGS Pressure Transducer
-      Serial.println("Which Transducer would you like to Read?:");
-      while(!Serial.available()>0);
-      deviceNumber = Serial.read() - '0'; 
-      data = TransducerArray[deviceNumber-1].readSensor();
-      Serial.println(data);
-      dataFile.println(data);
-    }
-    else if(functionNumber == 4)
-    {
-      //Test SD Card data
-      dataFile.println("The test Worked yeeeet");
-    }
-     else if(functionNumber == 5)
-    {
-      Serial.println("Which Solenoid would you like to Pulse?:");
-      while(!Serial.available()>0);
-      deviceNumber = Serial.read() - '0';
-      
-      if(deviceNumber>=1 && deviceNumber<7 )
-      {
-        if(SolenoidArray[deviceNumber-1].pulseSolenoid())
-        {     
-        Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
-        Serial.println(SolenoidArray[deviceNumber-1].getSolenoidStatus());
-        }
-        else
-        {
-          Serial.println("Failed to Pulse Solenoid??");
-        }
-        
-      }
-      else
-      {
-        Serial.println("Invalid Device number");
-      }
-    }
-    else
-    {
-      Serial.println("Invalid Command");
-    }
-    Serial.print("Please Type Command:");
-  }
+  ret = Squib_GetStatus(s, 1);
+  Serial.print("Status: ");
+  Serial.println(ret);
+  Serial.print("1A Resistance: ");
+  Serial.println(s->Squib_Stat1AResistance, BIN);
+  Serial.print("1B Resistance: ");
+  Serial.println(s->Squib_Stat1BResistance, BIN);
+  Serial.print("2A Resistance: ");
+  Serial.println(s->Squib_Stat2AResistance, BIN);
+  Serial.print("2B Resistance: ");
+  Serial.println(s->Squib_Stat2BResistance, BIN);
 
-
-
-
-
-
-
-
-
-  dataFile.flush();
+  Serial.print("Enable 1: ");
+  Serial.println(s->Squib_StatFen1);
+  Serial.print("Enable 2: ");
+  Serial.println(s->Squib_StatFen2);
 
   /*
-  Serial.println((int)nitrousLine.readSensor());
-  nitrousFill.openSolenoid();
-  Serial.println(nitrousFill.getSolenoidStatus());
-  delay(500);
- 
-  digitalWrite(LED_D3, HIGH);
-  digitalWrite(LED_D2, LOW);
-  nitrousFill.closeSolenoid();
-  Serial.println(nitrousFill.getSolenoidStatus());
-
-  delay(500);
-  digitalWrite(LED_D3, LOW);
-  digitalWrite(LED_D2, HIGH);
+  if (Serial.available())
+  {
+    int code = Serial.parseInt();
+    if (code == 1)
+      ret = Squib_Fire(CMD_FIRE_1A);
+    if (code == 2)
+      ret = Squib_Fire(CMD_FIRE_1B);
+    if (code == 3)
+      ret = Squib_Fire(CMD_FIRE_2A);
+    if (code == 4)
+      ret = Squib_Fire(CMD_FIRE_2B);
+    // Serial.print("Fire: ");
+    Serial.println(ret);
+  }
   */
+}
+
+extern "C"
+{
+  void debug(const char *data)
+  {
+    Serial.println(data);
+  }
+
+  void debug_hex(uint8_t data)
+  {
+    Serial.println(data, HEX);
+  }
+
+  void debug_bin(uint8_t data)
+  {
+    Serial.println(data, BIN);
+  }
+
+  uint8_t send(uint8_t data)
+  {
+    // digitalWrite(whichSquib, LOW);
+    squibSPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
+    uint8_t val = squibSPI.transfer(data);
+    squibSPI.endTransaction();
+    // digitalWrite(whichSquib, HIGH);
+    return val;
+  }
 }
