@@ -24,51 +24,12 @@ void setup()
 
   delay(3000);
 
-  // Doesn't work for some reason: seems to only return back the command that was sent to it
-  // > send 0x96, receive 0xC8
-  // > send 0xC8, receive 0x96
-  // > send 0x96, receive 0xC8
-  // > etc...
-
-  // only returns 0x96 over and over (because that is the command sent)
-  // while (true) {
-    // delay(100);
-    // uint8_t send = 0x96;
-    // uint8_t recv = 0x00;
-    // squibSPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
-    // digitalWrite(Squib_SS_2, LOW);
-    // recv = squibSPI.transfer(send);
-    // squibSPI.endTransaction();
-    // digitalWrite(Squib_SS_2, HIGH);
-// 
-    // Serial.print("Squib Response: 0x");
-    // Serial.println(recv, HEX);
-    // Serial.println(recv == 0x69);
-    // Serial.println();
-  // }
-
-  
-
-
-  
-  uint8_t ret = Squib_Init(2);
-  // while (ret > 0) {
-    // delay(100);
-    // ret = Squib_Init(2);
-    // Serial.println();
-  // }
-  Serial.print("Squib 2 Init: ");
+  uint8_t ret = Squib_Init(1);
+  Serial.print("Squib 1 Init: ");
   Serial.println(ret);
 
-  delay(2000);
-
-  ret = Squib_Init(1);
-  while (ret > 0) {
-    delay(100);
-    ret = Squib_Init(1);
-    Serial.println();
-  }
-  Serial.print("Squib 1 Init: ");
+  ret = Squib_Init(2);
+  Serial.print("Squib 2 Init: ");
   Serial.println(ret);
 
   Serial.println();
@@ -136,11 +97,9 @@ extern "C"
 
   uint8_t send(uint8_t data)
   {
-    // digitalWrite(whichSquib, LOW);
     squibSPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
     uint8_t val = squibSPI.transfer(data);
     squibSPI.endTransaction();
-    // digitalWrite(whichSquib, HIGH);
     return val;
   }
 }
