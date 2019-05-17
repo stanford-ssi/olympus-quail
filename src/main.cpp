@@ -5,6 +5,9 @@
 #include "wiring_private.h"
 
 const int slaveSelectPin = 10;
+const int SquibA = 1;
+const int SquibB = 2;
+
 
 SPIClass squibSPI (&sercom0, Squib_MISO, Squib_SCK, Squib_MOSI,
                    SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2);
@@ -43,7 +46,7 @@ void loop()
 
   uint8_t ret;
 
-  ret = Squib_GetStatus(s, 1);
+  ret = Squib_GetStatus(s, SquibA);
   Serial.print("Status: ");
   Serial.println(ret);
   Serial.print("1A Resistance: ");
@@ -60,22 +63,22 @@ void loop()
   Serial.print("Enable 2: ");
   Serial.println(s->Squib_StatFen2);
 
-  /*
+  
   if (Serial.available())
   {
     int code = Serial.parseInt();
     if (code == 1)
-      ret = Squib_Fire(CMD_FIRE_1A);
+      ret = Squib_Fire(CMD_FIRE_1A,SquibA);
     if (code == 2)
-      ret = Squib_Fire(CMD_FIRE_1B);
+      ret = Squib_Fire(CMD_FIRE_1B,SquibA);
     if (code == 3)
-      ret = Squib_Fire(CMD_FIRE_2A);
+      ret = Squib_Fire(CMD_FIRE_2A,SquibA);
     if (code == 4)
-      ret = Squib_Fire(CMD_FIRE_2B);
+      ret = Squib_Fire(CMD_FIRE_2B,SquibA);
     // Serial.print("Fire: ");
     Serial.println(ret);
   }
-  */
+  
 }
 
 extern "C"
