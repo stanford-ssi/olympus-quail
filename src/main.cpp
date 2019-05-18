@@ -45,7 +45,7 @@ void loop()
   Squib_StatusType *s = new Squib_StatusType();
 
   uint8_t ret;
-
+/*
   ret = Squib_GetStatus(s, SquibA);
   Serial.print("Status: ");
   Serial.println(ret);
@@ -62,7 +62,7 @@ void loop()
   Serial.println(s->Squib_StatFen1);
   Serial.print("Enable 2: ");
   Serial.println(s->Squib_StatFen2);
-
+*/
   
   if (Serial.available())
   {
@@ -75,6 +75,17 @@ void loop()
       ret = Squib_Fire(CMD_FIRE_2A,SquibA);
     if (code == 4)
       ret = Squib_Fire(CMD_FIRE_2B,SquibA);
+    if (code == 5)
+      ret = Squib_Fire(CMD_FIRE_1A,SquibB);
+    if (code == 6)
+      ret = Squib_Fire(CMD_FIRE_1B,SquibB);
+    if (code == 7)
+      ret = Squib_Fire(CMD_FIRE_2A,SquibB);
+    if (code == 8)
+      ret = Squib_Fire(CMD_FIRE_2B,SquibB);
+
+
+
     // Serial.print("Fire: ");
     Serial.println(ret);
   }
