@@ -24,6 +24,7 @@ void setup() {
   // put your setup code here, to run once:
   //pinMode(Solenoid_1, OUTPUT);
   Serial.begin(9600);
+  delay(1000);
   Serial.println("Setup Begin");
   pinMode(LED_D2, OUTPUT);
   pinMode(LED_D3, OUTPUT);
@@ -57,7 +58,7 @@ void setup() {
   
   //digitalWrite(LED_D2, HIGH);
   digitalWrite(LED_D3, HIGH);
-  delay(2000);
+  delay(1000);
  
  // Squib Init
   uint8_t ret = Squib_Init(SquibA);
@@ -110,7 +111,7 @@ void loop() {
   int functionNumber  =  -1;
   int deviceNumber =-1;
 
-  Squib_StatusType *s = new Squib_StatusType();
+  //Squib_StatusType *s = new Squib_StatusType();
 
   uint8_t ret;
 
@@ -213,7 +214,7 @@ void loop() {
       while(!Serial.available()>0);
       deviceNumber = Serial.read() - '0';
       
-      if(deviceNumber>=1 && deviceNumber<8 )
+      if(deviceNumber>=1 && deviceNumber<10 )
       {
         if (deviceNumber == 1)
           ret = Squib_Fire(CMD_FIRE_1A,SquibA);
@@ -231,7 +232,10 @@ void loop() {
           ret = Squib_Fire(CMD_FIRE_2A,SquibB);
         if (deviceNumber == 8)
           ret = Squib_Fire(CMD_FIRE_2B,SquibB);
-
+        if (deviceNumber == 9){
+          ret = Squib_Fire(CMD_FIRE_1A,SquibA);
+          ret = Squib_Fire(CMD_FIRE_1A,SquibB);
+        }
            Serial.println(ret);
       }
       else
