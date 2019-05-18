@@ -3,7 +3,9 @@
 #include <solenoids.hpp>
 #include <pressure_sensor.hpp>
 #include  "SD.h"
-
+#include "MC33797.h"
+#include <SPI.h>
+#include "wiring_private.h"
 
 Solenoids oxidizerTankVent, nitrogenFill, nitrousFill, nitrousAbort, nitrogenAbort, pyrovalveShutOff;
 PressureSensor nitrousLine, nitrousHeatXger, nitrogenLine, oxidizerTank, combustionChamber;
@@ -13,11 +15,16 @@ double data;
 Solenoids SolenoidArray[]          = {oxidizerTankVent, nitrogenFill, nitrousFill, nitrousAbort, nitrogenAbort, pyrovalveShutOff}; // J12, J13, J15, J16, J19, J20
 PressureSensor TransducerArray[]   = {nitrousLine, nitrousHeatXger, nitrogenLine, oxidizerTank, combustionChamber}; 
 
+const uint8_t SquibA = 1;
+const uint8_t SquibB = 2;
 
+SPIClass squibSPI (&sercom0, Squib_MISO, Squib_SCK, Squib_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2);
 
 void setup() {
   // put your setup code here, to run once:
   //pinMode(Solenoid_1, OUTPUT);
+  Serial.begin(9600);
+  Serial.println("Setup Begin");
   pinMode(LED_D2, OUTPUT);
   pinMode(LED_D3, OUTPUT);
 
@@ -34,13 +41,36 @@ void setup() {
   SolenoidArray[4].initializeSolenoid(Solenoid_5, SMALL);
   SolenoidArray[5].initializeSolenoid(Solenoid_6, SMALL);
 
+  pinPeripheral(Squib_MISO, PIO_SERCOM_ALT);
+  pinPeripheral(Squib_SCK, PIO_SERCOM_ALT);
+  pinPeripheral(Squib_MOSI, PIO_SERCOM_ALT);
 
-  Serial.begin(9600);
-  Serial.println("Setup done");
+  pinMode(Squib_SS_1, OUTPUT);
+  pinMode(Squib_SS_2, OUTPUT);
+  digitalWrite(Squib_SS_1, HIGH);
+  digitalWrite(Squib_SS_2, HIGH);
+  squibSPI.begin();
+  
+
+
+
+  
   //digitalWrite(LED_D2, HIGH);
   digitalWrite(LED_D3, HIGH);
-  delay(1000);
+  delay(2000);
+ 
+ // Squib Init
+  uint8_t ret = Squib_Init(SquibA);
+  Serial.print("Squib 1 Init: ");
+  Serial.println(ret);
+  ret = Squib_Init(SquibB);
+  Serial.print("Squib 2 Init: ");
+  Serial.println(ret);
+  Serial.println();
 
+
+
+ // SD Card Init - While get stuck here if no SD
   Serial.print("Initializing SD card...");
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
@@ -71,7 +101,7 @@ void setup() {
      }
   }
   dataFile.println("Data logging for Quail has begun yeet");
-  
+  Serial.println("Setup done");
 }
 
 void loop() {
@@ -79,6 +109,11 @@ void loop() {
  
   int functionNumber  =  -1;
   int deviceNumber =-1;
+
+  Squib_StatusType *s = new Squib_StatusType();
+
+  uint8_t ret;
+
 
   if (Serial.available() > 0)
   {
@@ -172,6 +207,38 @@ void loop() {
         Serial.println("Invalid Device number");
       }
     }
+    else if(functionNumber == 6)
+    {
+      Serial.println("Which Squib would you like to Fire?:");
+      while(!Serial.available()>0);
+      deviceNumber = Serial.read() - '0';
+      
+      if(deviceNumber>=1 && deviceNumber<8 )
+      {
+        if (deviceNumber == 1)
+          ret = Squib_Fire(CMD_FIRE_1A,SquibA);
+        if (deviceNumber == 2)
+          ret = Squib_Fire(CMD_FIRE_1B,SquibA);
+        if (deviceNumber == 3)
+          ret = Squib_Fire(CMD_FIRE_2A,SquibA);
+        if (deviceNumber == 4)
+          ret = Squib_Fire(CMD_FIRE_2B,SquibA);
+        if (deviceNumber == 5)
+          ret = Squib_Fire(CMD_FIRE_1A,SquibB);
+        if (deviceNumber == 6)
+          ret = Squib_Fire(CMD_FIRE_1B,SquibB);
+        if (deviceNumber == 7)
+          ret = Squib_Fire(CMD_FIRE_2A,SquibB);
+        if (deviceNumber == 8)
+          ret = Squib_Fire(CMD_FIRE_2B,SquibB);
+
+           Serial.println(ret);
+      }
+      else
+      {
+        Serial.println("Invalid Device number");
+      }
+    }
     else
     {
       Serial.println("Invalid Command");
@@ -179,15 +246,7 @@ void loop() {
     Serial.print("Please Type Command:");
   }
 
-
-
-
-
-
-
-
-
-  dataFile.flush();
+ dataFile.flush();
 
   /*
   Serial.println((int)nitrousLine.readSensor());
@@ -204,4 +263,28 @@ void loop() {
   digitalWrite(LED_D3, LOW);
   digitalWrite(LED_D2, HIGH);
   */
+}
+
+extern "C"
+{
+  void debug(const char *data){
+    Serial.println(data);
+  }
+
+  void debug_hex(uint8_t data)
+  {
+    Serial.println(data, HEX);
+  }
+
+  void debug_bin(uint8_t data)
+  {
+    Serial.println(data, BIN);
+  }
+  uint8_t send(uint8_t data)
+  {
+    squibSPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
+    uint8_t val = squibSPI.transfer(data);
+    squibSPI.endTransaction();
+    return val;
+  }
 }
