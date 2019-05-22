@@ -29,7 +29,7 @@ void setup() {
 
   // put your setup code here, to run once:
   //pinMode(Solenoid_1, OUTPUT);
-  Serial.begin(9600);
+  Serial.begin(115200);
   delay(1000);
   Serial.println("Setup Begin");
   pinMode(LED_D2, OUTPUT);
@@ -44,7 +44,7 @@ void setup() {
   SolenoidArray[0].initializeSolenoid(Solenoid_1, SOLENOID_MEDIUM); // Oxidizer Tank Vent, On Rocket, Edelbrook (J12)
   SolenoidArray[1].initializeSolenoid(Solenoid_2, SOLENOID_MEDIUM); // Nitrogen Fill (J13)
   SolenoidArray[2].initializeSolenoid(Solenoid_3, SOLENOID_LARGE); //  Nitrous Fill, Pro BigShot?? (J15)
-  SolenoidArray[3].initializeSolenoid(Solenoid_4, SOLENOID_SMALL); //  Nitrous Abort (J16)
+  SolenoidArray[3].initializeSolenoid(Solenoid_4, SOLENOID_SMALL); //  Nitrous A132312112bort (J16)
   SolenoidArray[4].initializeSolenoid(Solenoid_5, SOLENOID_SMALL); //  Nitrogen Abort (J19)
   SolenoidArray[5].initializeSolenoid(Solenoid_6, SOLENOID_SMALL); // Pyrovalve Shut Off(J20)
 
@@ -123,7 +123,7 @@ void loop() {
   
   unsigned long currTime = millis();
   
-  if((currTime-1000 ) > startTime)
+  if((currTime-5 ) > startTime)
   {
           PrintTansducerValuesSerial(TransducerArray);
           startTime = currTime;
