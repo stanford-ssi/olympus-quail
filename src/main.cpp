@@ -6,6 +6,7 @@
 #include "MC33797.h"
 #include <SPI.h>
 #include "wiring_private.h"
+//#include <datalogger.hpp>
 
 Solenoids oxidizerTankVent, nitrogenFill, nitrousFill, nitrousAbort, nitrogenAbort, pyrovalveShutOff;
 PressureSensor nitrousLine, nitrousHeatXger, nitrogenLine, oxidizerTank, combustionChamber;
@@ -17,10 +18,15 @@ PressureSensor TransducerArray[]   = {nitrousLine, nitrousHeatXger, nitrogenLine
 
 const uint8_t SquibA = 1;
 const uint8_t SquibB = 2;
+unsigned long startTime = millis();
 
 SPIClass squibSPI (&sercom0, Squib_MISO, Squib_SCK, Squib_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2);
 
+//Want to move this to sepreate File
+int PrintTansducerValuesSerial(PressureSensor transducers[]);
+
 void setup() {
+
   // put your setup code here, to run once:
   //pinMode(Solenoid_1, OUTPUT);
   Serial.begin(9600);
@@ -29,18 +35,18 @@ void setup() {
   pinMode(LED_D2, OUTPUT);
   pinMode(LED_D3, OUTPUT);
 
-  TransducerArray[0].initializeSensor(Pressure_1);
-  TransducerArray[1].initializeSensor(Pressure_2);
-  TransducerArray[2].initializeSensor(Pressure_3);
-  TransducerArray[3].initializeSensor(Pressure_4);
-  TransducerArray[4].initializeSensor(Pressure_5);
+  TransducerArray[0].initializeSensor(Pressure_1,RANGE_1K,3); // Nitrous Line/Supply
+  TransducerArray[1].initializeSensor(Pressure_2,RANGE_1K,7); // Nitrous after Heat Exchanger
+  TransducerArray[2].initializeSensor(Pressure_3,RANGE_1K,6); // Nitrogen Line
+  TransducerArray[3].initializeSensor(Pressure_4,RANGE_2K,0); // Oxidizier Tank (On Motor)
+  TransducerArray[4].initializeSensor(Pressure_5,RANGE_2K,-9); // Combustion Chamber or Manifold Pressure
 
-  SolenoidArray[0].initializeSolenoid(Solenoid_1, MEDIUM);
-  SolenoidArray[1].initializeSolenoid(Solenoid_2, MEDIUM);
-  SolenoidArray[2].initializeSolenoid(Solenoid_3, LARGE);
-  SolenoidArray[3].initializeSolenoid(Solenoid_4, SMALL);
-  SolenoidArray[4].initializeSolenoid(Solenoid_5, SMALL);
-  SolenoidArray[5].initializeSolenoid(Solenoid_6, SMALL);
+  SolenoidArray[0].initializeSolenoid(Solenoid_1, SOLENOID_MEDIUM); // Oxidizer Tank Vent, On Rocket, Edelbrook (J12)
+  SolenoidArray[1].initializeSolenoid(Solenoid_2, SOLENOID_MEDIUM); // Nitrogen Fill (J13)
+  SolenoidArray[2].initializeSolenoid(Solenoid_3, SOLENOID_LARGE); //  Nitrous Fill, Pro BigShot?? (J15)
+  SolenoidArray[3].initializeSolenoid(Solenoid_4, SOLENOID_SMALL); //  Nitrous Abort (J16)
+  SolenoidArray[4].initializeSolenoid(Solenoid_5, SOLENOID_SMALL); //  Nitrogen Abort (J19)
+  SolenoidArray[5].initializeSolenoid(Solenoid_6, SOLENOID_SMALL); // Pyrovalve Shut Off(J20)
 
   pinPeripheral(Squib_MISO, PIO_SERCOM_ALT);
   pinPeripheral(Squib_SCK, PIO_SERCOM_ALT);
@@ -52,9 +58,6 @@ void setup() {
   digitalWrite(Squib_SS_2, HIGH);
   squibSPI.begin();
   
-
-
-
   
   //digitalWrite(LED_D2, HIGH);
   digitalWrite(LED_D3, HIGH);
@@ -97,12 +100,14 @@ void setup() {
      while (!dataFile) {
         Serial.println("error opening datalog.txt");
         delay(500);
-        dataFile = SD.open("datalog-5-10-19.txt", FILE_WRITE);
+        dataFile = SD.open("datalogl.txt", FILE_WRITE);
 
      }
   }
   dataFile.println("Data logging for Quail has begun yeet");
   Serial.println("Setup done");
+  
+  
 }
 
 void loop() {
@@ -115,11 +120,22 @@ void loop() {
 
   uint8_t ret;
 
+  
+  unsigned long currTime = millis();
+  
+  if((currTime-1000 ) > startTime)
+  {
+          PrintTansducerValuesSerial(TransducerArray);
+          startTime = currTime;
+  }
+
+
+
 
   if (Serial.available() > 0)
   {
     functionNumber = Serial.read() - '0';
-     /*
+     /*  
       subtract 1 from the recipe number to get the index in the array
     */ 
     Serial.println("");
@@ -182,7 +198,8 @@ void loop() {
     else if(functionNumber == 4)
     {
       //Test SD Card data
-      dataFile.println("The test Worked yeeeet");
+      //dataFile.println("The test Worked yeeeet");
+      PrintTansducerValuesSerial(TransducerArray);
     }
      else if(functionNumber == 5)
     {
@@ -252,22 +269,9 @@ void loop() {
 
  dataFile.flush();
 
-  /*
-  Serial.println((int)nitrousLine.readSensor());
-  nitrousFill.openSolenoid();
-  Serial.println(nitrousFill.getSolenoidStatus());
-  delay(500);
- 
-  digitalWrite(LED_D3, HIGH);
-  digitalWrite(LED_D2, LOW);
-  nitrousFill.closeSolenoid();
-  Serial.println(nitrousFill.getSolenoidStatus());
-
-  delay(500);
-  digitalWrite(LED_D3, LOW);
-  digitalWrite(LED_D2, HIGH);
-  */
 }
+
+
 
 extern "C"
 {
@@ -291,4 +295,24 @@ extern "C"
     squibSPI.endTransaction();
     return val;
   }
+}
+
+
+int PrintTansducerValuesSerial(PressureSensor transducers[])
+{
+    //Serial.println("Sending Data:");
+
+    for(int i =0; i<5; i++)
+    {
+       data = transducers[i].readSensor();
+
+        if (data>2000 || data<-200)
+            data = -1;
+
+        Serial.print(data);
+        Serial.print(",");
+       
+    }
+        Serial.println("0");
+    return 1;
 }

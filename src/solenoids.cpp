@@ -4,7 +4,7 @@
     using namespace std; 
     
 
-    void Solenoids::initializeSolenoid(uint8_t solenoid_number, uint8_t size)
+    void Solenoids::initializeSolenoid(uint8_t solenoid_number, Solenoid_Size size)
     {
         this->solenoid_number =  solenoid_number;
         this->size =  size;
