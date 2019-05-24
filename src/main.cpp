@@ -20,10 +20,15 @@ const uint8_t SquibA = 1;
 const uint8_t SquibB = 2;
 unsigned long startTime = millis();
 
+int functionNumber  =  -1;
+int deviceNumber = -1;
+
 SPIClass squibSPI (&sercom0, Squib_MISO, Squib_SCK, Squib_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2);
 
 //Want to move this to sepreate File
-int PrintTansducerValuesSerial(PressureSensor transducers[]);
+int PrintTansducerValuesSerial(PressureSensor transducers[], unsigned long timeMillis);
+// Should log to SD too with time stamps 
+int LogTansducerValuesSD(PressureSensor transducers[], unsigned long timeMillis);
 
 void setup() {
 
@@ -113,8 +118,7 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
  
-  int functionNumber  =  -1;
-  int deviceNumber =-1;
+  
 
   //Squib_StatusType *s = new Squib_StatusType();
 
@@ -134,13 +138,20 @@ void loop() {
 
   if (Serial.available() > 0)
   {
-    functionNumber = Serial.read() - '0';
-     /*  
+    if(functionNumber == -1)
+    {
+      functionNumber = Serial.read() - '0';
+    }else{
+      deviceNumber = Serial.read() - '0';
+    } 
+  }
+
+     /* 
       subtract 1 from the recipe number to get the index in the array
     */ 
     Serial.println("");
    
-    if(functionNumber == 1)
+    if(functionNumber == 1 && deviceNumber>0)
     {
       // Function 1 OPENS Solenoid and prints status
       Serial.println("Which Solenoid would you like to Open?:");
@@ -166,7 +177,7 @@ void loop() {
       }
 
       }
-    else if(functionNumber == 2)
+    else if(functionNumber == 2 && deviceNumber>0)
     {
       // Function 2 CLOSES Solenoid and prints status
       Serial.println("Which Solenoid would you like to Close?:");
@@ -185,7 +196,7 @@ void loop() {
       }
       
     }
-    else if(functionNumber == 3)
+    else if(functionNumber == 3 && deviceNumber>0)
     {
       // Function 3 READS & LOGS Pressure Transducer
       Serial.println("Which Transducer would you like to Read?:");
@@ -195,13 +206,13 @@ void loop() {
       Serial.println(data);
       dataFile.println(data);
     }
-    else if(functionNumber == 4)
+    else if(functionNumber == 4 && deviceNumber>0)
     {
       //Test SD Card data
       //dataFile.println("The test Worked yeeeet");
       PrintTansducerValuesSerial(TransducerArray);
     }
-     else if(functionNumber == 5)
+     else if(functionNumber == 5 && deviceNumber>0)
     {
       Serial.println("Which Solenoid would you like to Pulse?:");
       while(!Serial.available()>0);
@@ -225,7 +236,7 @@ void loop() {
         Serial.println("Invalid Device number");
       }
     }
-    else if(functionNumber == 6)
+    else if(functionNumber == 6 && deviceNumber>0)
     {
       Serial.println("Which Squib would you like to Fire?:");
       while(!Serial.available()>0);
@@ -298,7 +309,7 @@ extern "C"
 }
 
 
-int PrintTansducerValuesSerial(PressureSensor transducers[])
+int PrintTansducerValuesSerial(PressureSensor transducers[], unsigned long timeMillis)
 {
     //Serial.println("Sending Data:");
 
@@ -313,6 +324,9 @@ int PrintTansducerValuesSerial(PressureSensor transducers[])
         Serial.print(",");
        
     }
+        
+        Serial.print(",");
         Serial.println("0");
+
     return 1;
 }

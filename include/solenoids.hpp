@@ -8,6 +8,18 @@ typedef enum{
     SOLENOID_LARGE = 2
 }Solenoid_Size;
 
+typedef enum{
+    MILLIS_100 = 100,
+    MILLIS_200 = 200,
+    MILLIS_500 = 500,
+    SECONDS_1  = 1000,
+    SECONDS_2  = 2000, 
+    SECONDS_5  = 5000,
+    SECONDS_10 = 10000
+}PULSE_Length;
+
+
+
 static const uint16_t PULSE_TIME = 100;
 
 //From Tests
@@ -37,7 +49,13 @@ class Solenoids
     // returns 1 if it does the thing
     int closeSolenoid();
 
+    //Returns 1 if open 0 if closed
     bool getSolenoidStatus();
 
+    //Pulses for default = PULSE_TIME
     int pulseSolenoid();
+
+    //Pulses for specified time
+    int pulseSolenoid(PULSE_Length time);
+
 };
