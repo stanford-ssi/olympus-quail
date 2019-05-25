@@ -24,8 +24,8 @@ static const uint16_t PULSE_TIME = 100;
 
 //From Tests
 static const uint8_t SMALL_PWM  = 255 ;
-static const uint8_t MEDIUM_PWM = 255;
-static const uint8_t LARGE_PWM = 255;
+static const uint8_t MEDIUM_PWM = 100;
+static const uint8_t LARGE_PWM = 140;
 static const uint8_t SOLENOID_PWM[3] = {SMALL_PWM, MEDIUM_PWM, LARGE_PWM};
 
 class Solenoids
