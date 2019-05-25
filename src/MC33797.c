@@ -182,11 +182,11 @@ Squib_ReturnType Squib_Fire(Squib_FireType Squib_Fire, uint8_t squibNum)
     else
     {
       /* Arming Squibs command - for arming squibs pairs */
-      debug("Firing!");
+      //debug("Firing!");
       ret_com = Ard_ComSendByte(CMD_ARM_1_AND_2_SQUIB_PAIRS, &SquibCmdResp, squibNum);                        /* ARM squib drivers (ARM command "CMD_ARM_1_AND_2_SQUIB_PAIRS" is echoed back on the next command) */
       ret_com = Ard_ComSendByte((uint8_t)((Squib_Fire & MASK_CMD_FIRE) | CMD_FIRE), &SquibCmdResp, squibNum); /* fire selected squibs (fire command "Squib_Fire" is echoed back on the next command) */
       SQUIB_SPI_ERROR(ret_com, ret_val);                                                            /* if SPI communication error? */
-      debug("Fired!");
+      //debug("Fired!");
     }
   }
   return (ret_val);

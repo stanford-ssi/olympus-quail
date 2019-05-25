@@ -259,7 +259,7 @@ void loop() {
     }
     else if(functionNumber == 6)
     {
-      //Serial.println("Which Squib would you like to Fire?:");
+      //Serial.println("Which Squib would you like to ?:");
       //while(!Serial.available()>0);
       //deviceNumber = Serial.read() - '0';
       
@@ -291,6 +291,9 @@ void loop() {
       {
         Serial.println("Invalid Device number");
       }
+    deviceNumber =-1;
+    functionNumber =-1;
+
     }
     else
     {
