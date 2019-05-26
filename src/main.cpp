@@ -23,6 +23,12 @@ unsigned long startTime = millis();
 int functionNumber  =  -1;
 int deviceNumber = -1;
 
+String inData;
+String lastCommand ="00";
+int command;
+
+const char logFileName[] = "coldflow.txt";// Must be 8 chars or less
+
 SPIClass squibSPI (&sercom0, Squib_MISO, Squib_SCK, Squib_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2);
 
 //Want to move this to sepreate File
@@ -30,7 +36,7 @@ int PrintTansducerValuesSerial(PressureSensor transducers[], unsigned long timeM
 // Should log to SD too with time stamps 
 int LogTansducerValuesSD(PressureSensor transducers[], unsigned long timeMillis);
 //Creates Packets to send to Print and Log functions
-String createDataPacket(PressureSensor transducers[], unsigned long timeMillis);
+String createDataPacket(PressureSensor transducers[], unsigned long timeMillis, String lastCommand);
 
 void setup() {
 
@@ -41,19 +47,19 @@ void setup() {
   Serial.println("Setup Begin");
   pinMode(LED_D2, OUTPUT);
   pinMode(LED_D3, OUTPUT);
-
+ 
   TransducerArray[0].initializeSensor(Pressure_1,RANGE_1K,3); // Nitrous Line/Supply 3
   TransducerArray[1].initializeSensor(Pressure_2,RANGE_1K,7); // Nitrous after Heat Exchanger 7
   TransducerArray[2].initializeSensor(Pressure_3,RANGE_1K,0); // Nitrogen Line 6
   TransducerArray[3].initializeSensor(Pressure_4,RANGE_2K,-5); // Oxidizier Tank (On Motor) 0
   TransducerArray[4].initializeSensor(Pressure_5,RANGE_2K,-2); // Combustion Chamber or Manifold Pressure -9
 
-  SolenoidArray[0].initializeSolenoid(Solenoid_1, SOLENOID_MEDIUM); // Oxidizer Tank Vent, On Rocket, Edelbrook (J12)
-  SolenoidArray[1].initializeSolenoid(Solenoid_2, SOLENOID_MEDIUM); // Nitrogen Fill (J13)
-  SolenoidArray[2].initializeSolenoid(Solenoid_3, SOLENOID_LARGE); //  Nitrous Fill, Pro BigShot?? (J15)
-  SolenoidArray[3].initializeSolenoid(Solenoid_4, SOLENOID_SMALL); //  Nitrous A132312112bort (J16)
-  SolenoidArray[4].initializeSolenoid(Solenoid_5, SOLENOID_SMALL); //  Nitrogen Abort (J19)
-  SolenoidArray[5].initializeSolenoid(Solenoid_6, SOLENOID_SMALL); // Pyrovalve Shut Off(J20)
+  SolenoidArray[0].initializeSolenoid(Solenoid_1, SOLENOID_MEDIUM,SECONDS_2); // Oxidizer Tank Vent, On Rocket, Edelbrook (J12)
+  SolenoidArray[1].initializeSolenoid(Solenoid_2, SOLENOID_MEDIUM,MILLIS_200); // Nitrogen Fill (J13)
+  SolenoidArray[2].initializeSolenoid(Solenoid_3, SOLENOID_LARGE,SECONDS_2); //  Nitrous Fill, Pro BigShot?? (J15)
+  SolenoidArray[3].initializeSolenoid(Solenoid_4, SOLENOID_ABORT,SECONDS_10); //  Nitrous Abort (J16)
+  SolenoidArray[4].initializeSolenoid(Solenoid_5, SOLENOID_ABORT,SECONDS_10); //  Fuel/Nitrogen Abort (J19)
+  SolenoidArray[5].initializeSolenoid(Solenoid_6, SOLENOID_ABORT,SECONDS_10); // Pyrovalve Shut Off(J20)
 
   pinPeripheral(Squib_MISO, PIO_SERCOM_ALT);
   pinPeripheral(Squib_SCK, PIO_SERCOM_ALT);
@@ -79,8 +85,6 @@ void setup() {
   Serial.println(ret);
   Serial.println();
 
-
-
  // SD Card Init - While get stuck here if no SD
   Serial.print("Initializing SD card...");
   // make sure that the default chip select pin is set to
@@ -100,14 +104,14 @@ void setup() {
   digitalWrite(LED_D3,LOW);
 
   // Open up the file we're going to log to!
-  dataFile = SD.open("datalog52419.txt", FILE_WRITE);
+  dataFile = SD.open(logFileName, ((O_RDWR|O_APPEND))); 
   if (!dataFile) {
     Serial.println("error opening datalog.txt");
     // Wait forever since we cant write data
      while (!dataFile) {
         Serial.println("error opening datalog.txt");
         delay(500);
-        dataFile = SD.open("datalogl.txt", FILE_WRITE);
+        dataFile = SD.open(logFileName, (O_RDWR|O_APPEND));
 
      }
   }
@@ -129,140 +133,117 @@ void loop() {
  //Serial.println(currTime);
 
 
+
+// Sends Data packet every 5 ms
   if((currTime-5 ) > startTime)
   {
-          data = createDataPacket(TransducerArray, currTime);
+          data = createDataPacket(TransducerArray, currTime, lastCommand);
           //PrintTansducerValuesSerial(TransducerArray, currTime);
+          
+
+          //make sure to uncomment this before testing 
           Serial.println(data);
           dataFile.println(data);
+              
           startTime = currTime;
   }
 
-
-  if (Serial.available() > 0)
-  {
-    if(functionNumber == -1)
+   while (Serial.available() > 0)
     {
-      functionNumber = Serial.read() - '0';
+        char recieved = Serial.read();
+        inData += recieved; 
+
+        // Process message when new line character is recieved
+        if (recieved == '\n')
+        {
+            //Serial.print(inData);
+            command =inData.toInt();
+            
+            inData = ""; // Clear recieved buffer
+            functionNumber = (int)command/10;
+            deviceNumber = command%10;
+            lastCommand = command;
+            //Serial.println(functionNumber);
+            //Serial.println(deviceNumber);
+        }
     }
-    else
-    {
-      deviceNumber = Serial.read() - '0';
-    } 
 
-    Serial.println("");
-  }
+    if (functionNumber >0){
+      switch(functionNumber){
 
-     /* 
-      subtract 1 from the recipe number to get the index in the array
-    */ 
-   
-   
+      //Open Solenoid 
+      case 1:
+        if(deviceNumber>=1 && deviceNumber<7 )
+        { 
+          if(SolenoidArray[deviceNumber-1].openSolenoid())
+          {     
+          //Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
+          //Serial.println(SolenoidArray[deviceNumber-1].getSolenoidStatus());
+          } 
+          else
+          {
+            Serial.println("Failed to Open Solenoid??");
+          }
+        }
+      break;
 
-   if(functionNumber >0 && deviceNumber>0)
-   {
-    
-    if(functionNumber == 1)
-    {
-      // Function 1 OPENS Solenoid and prints status
-      //Serial.println("Which Solenoid would you like to Open?:");
-      //while(!Serial.available()>0);
-      
-      //deviceNumber = Serial.read() - '0';
-      
-      if(deviceNumber>=1 && deviceNumber<7 )
-      {
-        if(SolenoidArray[deviceNumber-1].openSolenoid())
-        {     
-        //Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
-        //Serial.println(SolenoidArray[deviceNumber-1].getSolenoidStatus());
+      //Close Solenoid
+      case 2:
+        if(deviceNumber>=1 && deviceNumber<7 )
+        {
+          if(SolenoidArray[deviceNumber-1].closeSolenoid())
+          {     
+          //Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
+          //Serial.println(nitrousFill.getSolenoidStatus());
+          }
         }
         else
         {
-          Serial.println("Failed to Open Solenoid??");
+          Serial.println("Invalid Device number");
         }
-         
+      break;
 
-      }
-      else
-      {
-        Serial.println("Invalid Device number");
-      }
-      functionNumber = -1;
-      deviceNumber = -1;
-      }
-    else if(functionNumber == 2)
-    {
-      // Function 2 CLOSES Solenoid and prints status
-      //Serial.println("Which Solenoid would you like to Close?:");
-      //while(!Serial.available()>0);
-      // deviceNumber = Serial.read() - '0';
-
-      if(deviceNumber>=1 && deviceNumber<7 )
-      {
-        SolenoidArray[deviceNumber-1].closeSolenoid();
-        //Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
-        //Serial.println(nitrousFill.getSolenoidStatus());
-      }
-      else
-      {
-        Serial.println("Invalid Device number");
-      }
-      functionNumber = -1;
-      deviceNumber = -1;
-      
-    }
-    else if(functionNumber == 3)
-    {
-      // Function 3 READS & LOGS Pressure Transducer
-      Serial.println("Which Transducer would you like to Read?:");
-      while(!Serial.available()>0);
-      deviceNumber = Serial.read() - '0'; 
-      data = TransducerArray[deviceNumber-1].readSensor();
-      Serial.println(data);
-      dataFile.println(data);
-    }
-    else if(functionNumber == 4)
-    {
-      //Test SD Card data
-      //dataFile.println("The test Worked yeeeet");
-      dataFile.println(createDataPacket(TransducerArray, currTime));
-      //PrintTansducerValuesSerial(TransducerArray, currTime);
-      functionNumber = -1;
-      deviceNumber = -1;
-    }
-     else if(functionNumber == 5)
-    {
-      //Serial.println("Which Solenoid would you like to Pulse?:");
-      //while(!Serial.available()>0);
-      //deviceNumber = Serial.read() - '0';
-      
-      if(deviceNumber>=1 && deviceNumber<7 )
-      {
-        if(SolenoidArray[deviceNumber-1].pulseSolenoid())
-        {     
-        //Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
-        //Serial.println(SolenoidArray[deviceNumber-1].getSolenoidStatus());
-        }
-        else
+      // Read Transducer
+      case 3:
+        //Serial.println("Which Transducer would you like to Read?:");
+        if(deviceNumber>=1 && deviceNumber<7 )
         {
-          Serial.println("Failed to Pulse Solenoid??");
+          data = TransducerArray[deviceNumber-1].readSensor();
+          //Serial.println(data);
+          //dataFile.println(data);  
         }
-        
-      }
-      else
-      {
-        Serial.println("Invalid Device number");
-      }
-      functionNumber = -1;
-      deviceNumber = -1;
-    }
-    else if(functionNumber == 6)
-    {
-      //Serial.println("Which Squib would you like to ?:");
-      //while(!Serial.available()>0);
-      //deviceNumber = Serial.read() - '0';
+      break;
+
+      // Log to SD Card
+      case 4:
+        //Test SD Card data
+        //dataFile.println("The test Worked yeeeet");
+        dataFile.println(createDataPacket(TransducerArray, currTime, lastCommand));
+        //PrintTansducerValuesSerial(TransducerArray, currTime);
+      break;
+
+      // Pulse Solenoid
+      case 5:
+        if(deviceNumber>=1 && deviceNumber<7 )
+          {
+            if(SolenoidArray[deviceNumber-1].pulseSolenoid())
+            {     
+              //Serial.print("Solenoid "+(String)deviceNumber+ " Status: ");
+              //Serial.println(SolenoidArray[deviceNumber-1].getSolenoidStatus());
+            }
+            else
+            {
+              Serial.println("Failed to Pulse Solenoid??");
+            }
+          }
+          else
+          {
+            Serial.println("Invalid Device number");
+          }
+      break;
       
+      //Fire Squibs
+      case 6:
       if(deviceNumber>=1 && deviceNumber<10 )
       {
         if (deviceNumber == 1)
@@ -289,24 +270,21 @@ void loop() {
       }
       else
       {
-        Serial.println("Invalid Device number");
+        Serial.println("Invalid Squib Channel");
       }
-    deviceNumber =-1;
-    functionNumber =-1;
+      break;
 
-    }
-    else
-    {
-      Serial.println("Invalid Command");
-    }
-    //Serial.print("Please Type Command:");
-   }
+      default:
+        Serial.println("Invalid Command");
+      break;
 
- dataFile.flush();
+      }
 
-}
-
-
+      functionNumber = -1;
+      deviceNumber = -1;
+      dataFile.flush();
+    }// end of Switch
+} // end of loop
 
 
 extern "C"
@@ -334,7 +312,7 @@ extern "C"
 }
 
 
-String createDataPacket(PressureSensor transducers[], unsigned long timeMillis){
+String createDataPacket(PressureSensor transducers[], unsigned long timeMillis, String lastCommand){
     
     String out = "0, ";
     
@@ -351,8 +329,9 @@ String createDataPacket(PressureSensor transducers[], unsigned long timeMillis){
     }
         
        out = out + timeMillis +",";
+       out = out + lastCommand;
 
-return out;
+ return out;
 }
 
 
@@ -397,6 +376,5 @@ int LogTansducerValuesSD(PressureSensor transducers[], unsigned long timeMillis)
         
         Serial.print(",");
         Serial.println("0");
-
-return 1;
+  return 1;
 }
