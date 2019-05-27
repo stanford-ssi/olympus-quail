@@ -55,7 +55,7 @@ void setup() {
   TransducerArray[4].initializeSensor(Pressure_5,RANGE_2K,-2); // Combustion Chamber or Manifold Pressure -9
 
   SolenoidArray[0].initializeSolenoid(Solenoid_1, SOLENOID_MEDIUM,SECONDS_2); // Oxidizer Tank Vent, On Rocket, Edelbrook (J12)
-  SolenoidArray[1].initializeSolenoid(Solenoid_2, SOLENOID_MEDIUM,MILLIS_200); // Nitrogen Fill (J13)
+  SolenoidArray[1].initializeSolenoid(Solenoid_2, SOLENOID_SMALL,MILLIS_200); // Nitrogen Fill (J13)
   SolenoidArray[2].initializeSolenoid(Solenoid_3, SOLENOID_LARGE,SECONDS_2); //  Nitrous Fill, Pro BigShot?? (J15)
   SolenoidArray[3].initializeSolenoid(Solenoid_4, SOLENOID_ABORT,SECONDS_10); //  Nitrous Abort (J16)
   SolenoidArray[4].initializeSolenoid(Solenoid_5, SOLENOID_ABORT,SECONDS_10); //  Fuel/Nitrogen Abort (J19)

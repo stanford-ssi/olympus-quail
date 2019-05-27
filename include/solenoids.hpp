@@ -24,8 +24,8 @@ typedef enum{
 //static const uint16_t PULSE_TIME = 100;
 
 //From Tests
-static const uint8_t SMALL_PWM  = 120 ;
-static const uint8_t MEDIUM_PWM = 160;
+static const uint8_t SMALL_PWM  = 130 ;
+static const uint8_t MEDIUM_PWM = 220;
 static const uint8_t LARGE_PWM = 180;
 static const uint8_t ABORT_PWM = 255;
 static const uint8_t SOLENOID_PWM[4] = {SMALL_PWM, MEDIUM_PWM, LARGE_PWM, ABORT_PWM};
