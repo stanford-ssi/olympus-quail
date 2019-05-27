@@ -4,6 +4,7 @@
 #include <pressure_sensor.hpp>
 #include  "SD.h"
 #include "MC33797.h"
+#include "ADS1148.h"
 #include <SPI.h>
 #include "wiring_private.h"
 //#include <datalogger.hpp>
@@ -24,6 +25,7 @@ int functionNumber  =  -1;
 int deviceNumber = -1;
 
 SPIClass squibSPI (&sercom0, Squib_MISO, Squib_SCK, Squib_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2);
+SPIClass Load_Cell_SPI (&sercom0, Load_Cell_MISO, Load_Cell_SCK, Load_Cell_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_3);
 
 //Want to move this to sepreate File
 int PrintTansducerValuesSerial(PressureSensor transducers[], unsigned long timeMillis);
@@ -37,7 +39,7 @@ void setup() {
   // put your setup code here, to run once:
   //pinMode(Solenoid_1, OUTPUT);
   Serial.begin(115200);
-  delay(1000);
+  delay(4000);
   Serial.println("Setup Begin");
   pinMode(LED_D2, OUTPUT);
   pinMode(LED_D3, OUTPUT);
@@ -64,7 +66,15 @@ void setup() {
   digitalWrite(Squib_SS_1, HIGH);
   digitalWrite(Squib_SS_2, HIGH);
   squibSPI.begin();
+
+  pinMode(Load_Cell_SS, OUTPUT);
+  digitalWrite(Load_Cell_SS, HIGH);
+  Load_Cell_SPI.begin();
   
+  Serial.println("opening ADS1148");
+  openADS1148();
+  delay(2000);
+  Serial.println("done opening ADS1148");
   
   //digitalWrite(LED_D2, HIGH);
   digitalWrite(LED_D3, HIGH);
@@ -328,7 +338,25 @@ extern "C"
     squibSPI.endTransaction();
     return val;
   }
+
+  uint8_t send_load_cell(uint8_t data)
+  {
+    digitalWrite(Load_Cell_SS, LOW);
+    Load_Cell_SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
+    uint8_t val = Load_Cell_SPI.transfer(data);
+    Load_Cell_SPI.endTransaction();
+    digitalWrite(Load_Cell_SS, HIGH);
+    return val;
+  }
+
+  void print_ADS1148_init(uint8_t out[]) {
+    Serial.println("Load Cell ADC initialization bytes:");
+    for (char i = 0; i<13; i++) {
+      Serial.println(out[i], HEX);
+    }
+  }
 }
+
 
 
 String createDataPacket(PressureSensor transducers[], unsigned long timeMillis){
