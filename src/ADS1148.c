@@ -6,7 +6,6 @@
 
 
 #include "ADS1148.h"
-#include <Arduino.h>
 
 
 
@@ -52,11 +51,12 @@ void openADS1148(void)
 	//Assume we're at default 5SPS and START pin just went high, this delay lets the filter reset
         delay(SPS5DELAY);
 
-        uint8_t out[13];
+        // uint8_t out[13];
 
 	//Send the stop reading data continuously command (so we can read registers and get conversions by sending RDATA)
 	// ROM_SSIDataPut(SSI3_BASE, SDATAC);
         // out[0] = send_load_cell(SDATAC);
+        print_byte_with_desc("RESET result: ", send_load_cell(RESET));
         print_byte_with_desc("SDATAC result: ", send_load_cell(SDATAC));
 
 	//let the filter reset

@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 
+#define RESET 0x6       //reset the ADC
 #define SDATAC 0x16     //stop reading data continuously command for ADS1248
 #define RDATA 0x12      //read data command
 #define NOP 0xFF        //no operation command
