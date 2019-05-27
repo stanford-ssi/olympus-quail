@@ -56,7 +56,8 @@ void openADS1148(void)
 
 	//Send the stop reading data continuously command (so we can read registers and get conversions by sending RDATA)
 	// ROM_SSIDataPut(SSI3_BASE, SDATAC);
-        out[0] = send_load_cell(SDATAC);
+        // out[0] = send_load_cell(SDATAC);
+        print_byte_with_desc("SDATAC result: ", send_load_cell(SDATAC));
 
 	//let the filter reset
         delay(SPS5DELAY);
@@ -65,9 +66,12 @@ void openADS1148(void)
 	// ROM_SSIDataPut(SSI3_BASE, 0x43);
 	// ROM_SSIDataPut(SSI3_BASE, 0x00);  //0x00 is # of bytes to write minus 1
 	// ROM_SSIDataPut(SSI3_BASE, 0x02);  //20 SPS
-        out[1] = send_load_cell(0x43);
-        out[2] = send_load_cell(0x00);
-        out[3] = send_load_cell(0x02);
+        // out[1] = send_load_cell(0x43);
+        // out[2] = send_load_cell(0x00);
+        // out[3] = send_load_cell(0x02);
+        print_byte_with_desc("0x43 result: ", send_load_cell(0x43));
+        print_byte_with_desc("0x00 result: ", send_load_cell(0x00));
+        print_byte_with_desc("0x02 result: ", send_load_cell(0x02));
 
 	//let digital filter reset
 	delay(SPS20DELAY);
@@ -76,9 +80,12 @@ void openADS1148(void)
 	// ROM_SSIDataPut(SSI3_BASE, 0x23);
 	// ROM_SSIDataPut(SSI3_BASE, 0x00); //0x00 is # of bytes to write minus 1
 	// ROM_SSIDataPut(SSI3_BASE, NOP);  //1st NOP issues 8 SCLK's to get 1 byte (should get 0xFF back)
-        out[4] = send_load_cell(0x23);
-        out[5] = send_load_cell(0x00);
-        out[6] = send_load_cell(NOP);
+        // out[4] = send_load_cell(0x23);
+        // out[5] = send_load_cell(0x00);
+        // out[6] = send_load_cell(NOP);
+        print_byte_with_desc("0x23 result: ", send_load_cell(0x23));
+        print_byte_with_desc("0x00 result: ", send_load_cell(0x00));
+        print_byte_with_desc("NOP result (should be 0xFF): ", send_load_cell(NOP));
 
 
 
@@ -86,9 +93,12 @@ void openADS1148(void)
 	// ROM_SSIDataPut(SSI3_BASE, 0x42);
 	// ROM_SSIDataPut(SSI3_BASE, 0x00); //0x00 is # of bytes to write minus 1
 	// ROM_SSIDataPut(SSI3_BASE, 0x30); //0x30 sets up internal reference for use
-        out[7] = send_load_cell(0x42);
-        out[8] = send_load_cell(0x00);
-        out[9] = send_load_cell(0x30);
+        // out[7] = send_load_cell(0x42);
+        // out[8] = send_load_cell(0x00);
+        // out[9] = send_load_cell(0x30);
+        print_byte_with_desc("0x42 result: ", send_load_cell(0x42));
+        print_byte_with_desc("0x00 result: ", send_load_cell(0x00));
+        print_byte_with_desc("0x30 result: ", send_load_cell(0x30));
 
 	//let filter reset before trying to get conversions. THIS DELAY MAY BE BREAKING EVERYTHING
 	//ROM_SysCtlDelay(SPS20DELAY);
@@ -97,11 +107,14 @@ void openADS1148(void)
 	// ROM_SSIDataPut(SSI3_BASE, 0x22);
 	// ROM_SSIDataPut(SSI3_BASE, 0x00); //0x00 is # of bytes to write minus 1
 	// ROM_SSIDataPut(SSI3_BASE, NOP);  //1st NOP issues 8 SCLK's to get 1 byte (should get 0xFF back)
-        out[10] = send_load_cell(0x22);
-        out[11] = send_load_cell(0x00);
-        out[12] = send_load_cell(NOP);
+        // out[10] = send_load_cell(0x22);
+        // out[11] = send_load_cell(0x00);
+        // out[12] = send_load_cell(NOP);
+        print_byte_with_desc("0x22 result: ", send_load_cell(0x22));
+        print_byte_with_desc("0x00 result: ", send_load_cell(0x00));
+        print_byte_with_desc("NOP result (should be 0xFF): ", send_load_cell(NOP));
 
-        print_ADS1148_init(out);
+        // print_ADS1148_init(out);
 
 
 	/*

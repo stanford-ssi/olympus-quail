@@ -25,7 +25,7 @@ int functionNumber  =  -1;
 int deviceNumber = -1;
 
 SPIClass squibSPI (&sercom0, Squib_MISO, Squib_SCK, Squib_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2);
-SPIClass Load_Cell_SPI (&sercom0, Load_Cell_MISO, Load_Cell_SCK, Load_Cell_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_3);
+SPIClass Load_Cell_SPI (&sercom2, Load_Cell_MISO, Load_Cell_SCK, Load_Cell_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_3);
 
 //Want to move this to sepreate File
 int PrintTansducerValuesSerial(PressureSensor transducers[], unsigned long timeMillis);
@@ -354,6 +354,11 @@ extern "C"
     for (char i = 0; i<13; i++) {
       Serial.println(out[i], HEX);
     }
+  }
+
+  void print_byte_with_desc(char* string, uint8_t byte_out) {
+    Serial.print(string);
+    Serial.println(byte_out, HEX);
   }
 }
 
