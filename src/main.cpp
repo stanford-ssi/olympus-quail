@@ -345,15 +345,38 @@ extern "C"
   {
     // delay(10);
     // digitalWrite(Load_Cell_SS, LOW);
-    Load_Cell_SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
+    Load_Cell_SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE1));
     uint8_t val = Load_Cell_SPI.transfer(data);
     Load_Cell_SPI.endTransaction();
     // digitalWrite(Load_Cell_SS, HIGH);
     return val;
   }
+  
+  void c_serial_print(char * str) {
+    Serial.print(str);
+  }
+
+  void c_serial_println_long(long dat) {
+    Serial.println((int) dat);
+  }
+
+  void c_serial_println_byte(uint8_t byte) {
+    Serial.println(byte, HEX);
+  }
+
+  uint8_t read_load_cell() {
+    digitalWrite(Load_Cell_SS, LOW);
+    while (digitalRead(Load_Cell_MISO) != LOW) {
+      Serial.println("Waiting for DRDY.");
+    }
+    Load_Cell_SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE1));
+    uint8_t val = Load_Cell_SPI.transfer(ADS1248_CMD_NOP);
+    Load_Cell_SPI.endTransaction();
+    return val;
+  }
 
   void start_load_cell_transaction() {
-    Load_Cell_SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
+    Load_Cell_SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE1));
   }
 
   void stop_load_cell_transaction() {
@@ -364,7 +387,7 @@ extern "C"
     return Load_Cell_SPI.transfer(data);
   }
 
-  void print_ADS1148_init(uint8_t out[], uint8_t len) {
+  void print_ADS1148_init(unsigned *out, uint8_t len) {
     Serial.println("Load Cell ADC initialization bytes:");
     for (uint8_t i = 0; i<len; i++) {
       Serial.println(out[i], HEX);
@@ -381,6 +404,10 @@ extern "C"
       digitalWrite(Load_Cell_SS, HIGH);
     } else
       digitalWrite(Load_Cell_SS, LOW);
+  }
+
+  void c_delay(long milliseconds) {
+    delay(milliseconds);
   }
 }
 

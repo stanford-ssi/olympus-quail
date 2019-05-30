@@ -65,18 +65,15 @@
 //
 //******************************************************************************
 
-/*
- * ======== Standard MSP430 includes ========
- */
-#include "ads1248.h"
+#include "ads1248.h"  // actually using ads1148
 
 // Initial configuration for Quail
 void ADS1148_Quail_Config(void) {
-  delay(16);
+  c_delay(16);
   ADS1248SendResetCommand();
-  delay(1);
+  c_delay(1);
   //establish some startup register settings
-  unsigned char regArray[4];
+  unsigned regArray[4];
   // Send SDATAC command
   ADS1248SendSDATAC();
   ADS1248WaitForDataReady(0);
@@ -84,16 +81,44 @@ void ADS1148_Quail_Config(void) {
   //write the desired default register settings for the first 4 registers NOTE: values shown are the POR values as per datasheet
   regArray[0] = 0x01;
   regArray[1] = 0x00;
-  regArray[2] = 0x03;
-  regArray[3] = 0x42;
+  regArray[2] = 0x00;
+  regArray[3] = 0x72;  // PGA gain: 128, 20 SPS
   ADS1248WriteSequence(ADS1248_0_MUX0, 4, regArray);
-  unsigned char regArrayCheck[4];  // array for reading back written values for sanity check
-  ADS1248ReadRegister(ADS1248_0_MUX0, 4, regArray);
-  print_ADS1148_init(regArray, 4);
+  unsigned regArrayCheck[4];  // array for reading back written values for sanity check
+  ADS1248ReadRegister(ADS1248_0_MUX0, 4, regArrayCheck);
+  print_ADS1148_init(regArrayCheck, 4);
+  // SPI debug stuff:
+  /*
+  while (1) {
+    ADS1248ReadRegister(ADS1248_0_MUX0, 4, regArrayCheck);
+    print_ADS1148_init(regArrayCheck, 4);
+    c_serial_print("regArray[3]: ");
+    c_serial_println_byte(regArray[3]);
+  }
+  */
+
+  c_serial_print("gain: ");
+  c_serial_println_long(ADS1248GetGain()); // should print "7" for PGA gain of 128
+  c_serial_print("data rate: ");
+  c_serial_println_long(ADS1248GetDataRate()); // should print "2" for data rate of 20 SPS
+  c_delay(1000);
+
+  while (1) {
+    // for (char i = 0; i < 4; i++) {
+    char i = 2;
+      c_delay(100);
+      ADS1248SetChannel(i*2, i*2 + 1); // AIN0 and AIN1 for channel 0; AIN6 and AIN7 for channel 3; etc
+      long dat = ADS1248ReadData();  // read a single data point (will want to avergae together more)
+      c_serial_print("channel ");
+      c_serial_println_long(i);
+      c_serial_print("data: ");
+      c_serial_println_long(dat);
+    // }
+  }
 }
 
 /*
- * ADS1248 Initial Configuration
+ * ADS1248 Initial Configuration (unused for Quail)
  */
 void InitConfig(void)
 {
@@ -114,7 +139,7 @@ void InitConfig(void)
 
 int ADS1248WaitForDataReady(int Timeout)
 {
-  delay(1);
+  c_delay(1);
   return ADS1248_NO_ERROR;
 }
 
@@ -135,6 +160,7 @@ unsigned char ADS1248ReceiveByte(void)
 {
   unsigned char Result = 0;
   Result = send_load_cell(ADS1248_CMD_NOP);
+  // Result = read_load_cell();
   return Result;
 }
 
@@ -213,6 +239,12 @@ void ADS1248ReadRegister(int StartAddress, int NumRegs, unsigned * pData)
 	// send the command byte
 	ADS1248SendByte(ADS1248_CMD_RREG | (StartAddress & 0x0f));
 	ADS1248SendByte((NumRegs-1) & 0x0f);
+        /*
+        c_serial_print("Send byte 1: ");
+        c_serial_println_byte(ADS1248_CMD_RREG | (StartAddress & 0x0f));
+        c_serial_print("Send byte 2: ");
+        c_serial_println_byte((NumRegs-1) & 0x0f);
+        */
 	// get the register content
 	for (i=0; i< NumRegs; i++)
 	{
@@ -243,7 +275,6 @@ void ADS1248WriteRegister(int StartAddress, int NumRegs, unsigned * pData)
 void ADS1248WriteSequence(int StartAddress, int NumRegs, unsigned * pData)
 {
 	int i;
-	char dummy;
 	// set the CS low
 	ADS1248AssertCS(0);
         start_load_cell_transaction();
