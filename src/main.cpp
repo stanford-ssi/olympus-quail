@@ -4,7 +4,8 @@
 #include <pressure_sensor.hpp>
 #include  "SD.h"
 #include "MC33797.h"
-#include "ADS1148.h"
+// #include "ADS1148.h"
+#include "ads1248.h"
 #include <SPI.h>
 #include "wiring_private.h"
 //#include <datalogger.hpp>
@@ -72,8 +73,9 @@ void setup() {
   Load_Cell_SPI.begin();
   
   Serial.println("opening ADS1148");
-  openADS1148();
-  delay(2000);
+  // openADS1148();
+  ADS1148_Quail_Config();
+  delay(1000);
   Serial.println("done opening ADS1148");
   
   //digitalWrite(LED_D2, HIGH);
@@ -341,17 +343,30 @@ extern "C"
 
   uint8_t send_load_cell(uint8_t data)
   {
-    digitalWrite(Load_Cell_SS, LOW);
-    Load_Cell_SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
+    // delay(10);
+    // digitalWrite(Load_Cell_SS, LOW);
+    Load_Cell_SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
     uint8_t val = Load_Cell_SPI.transfer(data);
     Load_Cell_SPI.endTransaction();
-    digitalWrite(Load_Cell_SS, HIGH);
+    // digitalWrite(Load_Cell_SS, HIGH);
     return val;
   }
 
-  void print_ADS1148_init(uint8_t out[]) {
+  void start_load_cell_transaction() {
+    Load_Cell_SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
+  }
+
+  void stop_load_cell_transaction() {
+    Load_Cell_SPI.endTransaction();
+  }
+
+  uint8_t send_load_cell_byte_many(uint8_t data) {
+    return Load_Cell_SPI.transfer(data);
+  }
+
+  void print_ADS1148_init(uint8_t out[], uint8_t len) {
     Serial.println("Load Cell ADC initialization bytes:");
-    for (char i = 0; i<13; i++) {
+    for (uint8_t i = 0; i<len; i++) {
       Serial.println(out[i], HEX);
     }
   }
@@ -359,6 +374,13 @@ extern "C"
   void print_byte_with_desc(char* string, uint8_t byte_out) {
     Serial.print(string);
     Serial.println(byte_out, HEX);
+  }
+  void load_cell_assert_CS(int fAssert) {
+    if (fAssert) {
+      delayMicroseconds(2);   // wait minimum of 7 clock periods (1 / 4.096 MHz) before bringing CS back up
+      digitalWrite(Load_Cell_SS, HIGH);
+    } else
+      digitalWrite(Load_Cell_SS, LOW);
   }
 }
 

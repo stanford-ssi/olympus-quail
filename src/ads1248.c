@@ -72,6 +72,7 @@
 
 // Initial configuration for Quail
 void ADS1148_Quail_Config(void) {
+  delay(16);
   ADS1248SendResetCommand();
   delay(1);
   //establish some startup register settings
