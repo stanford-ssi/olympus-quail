@@ -27,7 +27,7 @@ String inData;
 String lastCommand ="00";
 int command;
 
-const char logFileName[] = "coldflow.txt";// Must be 8 chars or less
+const char logFileName[] = "hotfire.txt";// Must be 8 chars or less
 
 SPIClass squibSPI (&sercom0, Squib_MISO, Squib_SCK, Squib_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2);
 
@@ -49,7 +49,7 @@ void setup() {
   pinMode(LED_D3, OUTPUT);
  
   TransducerArray[0].initializeSensor(Pressure_1,RANGE_1K,3); // Nitrous Line/Supply 3
-  TransducerArray[1].initializeSensor(Pressure_2,RANGE_1K,7); // Nitrous after Heat Exchanger 7
+  TransducerArray[1].initializeSensor(Pressure_2,RANGE_2K,0); // Combustion Chamber
   TransducerArray[2].initializeSensor(Pressure_3,RANGE_1K,0); // Nitrogen Line 6
   TransducerArray[3].initializeSensor(Pressure_4,RANGE_2K,-5); // Oxidizier Tank (On Motor) 0
   TransducerArray[4].initializeSensor(Pressure_5,RANGE_2K,-2); // Combustion Chamber or Manifold Pressure -9
