@@ -114,16 +114,15 @@ void ADS1148_Quail_Config(void) {
   c_serial_println_long(ADS1248GetDataRate()); // should print "2" for data rate of 20 SPS
   c_delay(1000);
 
-  ADS1248SendRDATAC();
+  // ADS1248SendRDATAC();
 
   while (1) {
     // for (char i = 0; i < 4; i++) {
-    char i = 2;
+    char i = 0;
       c_delay(100);
       ADS1248SetChannel(i*2, i*2 + 1); // AIN0 and AIN1 for channel 0; AIN6 and AIN7 for channel 3; etc
       c_delay(100);
-      // long dat = ADS1248ReadData();  // read a single data point (will want to avergae together more)
-      long dat = ADS1248RDATACRead();
+      long dat = ADS1248ReadData();  // read a single data point (will want to avergae together more)
       // long dat = ADS1248RDATACRead();
       c_serial_print("channel ");
       c_serial_println_long(i);
