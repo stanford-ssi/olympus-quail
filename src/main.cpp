@@ -403,6 +403,7 @@ extern "C"
       delayMicroseconds(2);   // wait minimum of 7 clock periods (1 / 4.096 MHz) before bringing CS back up
       digitalWrite(Load_Cell_SS, HIGH);
     } else
+      delayMicroseconds(1);
       digitalWrite(Load_Cell_SS, LOW);
   }
 

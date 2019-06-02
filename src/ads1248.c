@@ -81,12 +81,21 @@ void ADS1148_Quail_Config(void) {
   //write the desired default register settings for the first 4 registers NOTE: values shown are the POR values as per datasheet
   regArray[0] = 0x01;
   regArray[1] = 0x00;
-  regArray[2] = 0x00;
-  regArray[3] = 0x72;  // PGA gain: 128, 20 SPS
+  regArray[2] = 0x50;
+  // regArray[3] = 0x72;  // PGA gain: 128, 20 SPS
+  regArray[3] = 0x02;  // PGA gain: 1, 20 SPS
   ADS1248WriteSequence(ADS1248_0_MUX0, 4, regArray);
   unsigned regArrayCheck[4];  // array for reading back written values for sanity check
   ADS1248ReadRegister(ADS1248_0_MUX0, 4, regArrayCheck);
   print_ADS1148_init(regArrayCheck, 4);
+  ADS1248SetGain(0);
+  c_delay(100);
+  ADS1248SendSYSOCAL();
+  c_delay(1000);
+  //
+  // ADS1248SendSELFOCAL();
+  // ADS1248SendSYSGCAL();
+  // c_delay(100);
   // SPI debug stuff:
   /*
   while (1) {
@@ -96,6 +105,8 @@ void ADS1148_Quail_Config(void) {
     c_serial_println_byte(regArray[3]);
   }
   */
+  // ADS1248SendRDATAC();
+  // ADS1248SetIntRef(1);
 
   c_serial_print("gain: ");
   c_serial_println_long(ADS1248GetGain()); // should print "7" for PGA gain of 128
@@ -103,12 +114,17 @@ void ADS1148_Quail_Config(void) {
   c_serial_println_long(ADS1248GetDataRate()); // should print "2" for data rate of 20 SPS
   c_delay(1000);
 
+  ADS1248SendRDATAC();
+
   while (1) {
     // for (char i = 0; i < 4; i++) {
     char i = 2;
       c_delay(100);
       ADS1248SetChannel(i*2, i*2 + 1); // AIN0 and AIN1 for channel 0; AIN6 and AIN7 for channel 3; etc
-      long dat = ADS1248ReadData();  // read a single data point (will want to avergae together more)
+      c_delay(100);
+      // long dat = ADS1248ReadData();  // read a single data point (will want to avergae together more)
+      long dat = ADS1248RDATACRead();
+      // long dat = ADS1248RDATACRead();
       c_serial_print("channel ");
       c_serial_println_long(i);
       c_serial_print("data: ");
@@ -223,6 +239,7 @@ long ADS1248ReadData(void)
 	// get the conversion result
 	Data = ADS1248ReceiveByte();
 	Data = (Data << 8) | ADS1248ReceiveByte();
+        print_byte_with_desc("receive byte: ", Data);
         // sign extend data if the MSB is high (16 to 32 bit sign extension)
 	if (Data & 0x8000)
 		Data |= 0xffff0000;
