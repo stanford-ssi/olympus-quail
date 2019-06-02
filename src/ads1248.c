@@ -115,6 +115,7 @@ void ADS1148_Quail_Config(void) {
   c_delay(1000);
 
   // ADS1248SendRDATAC();
+  // comment!
 
   while (1) {
     // for (char i = 0; i < 4; i++) {
