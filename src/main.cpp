@@ -19,6 +19,9 @@ PressureSensor TransducerArray[]   = {nitrousLine, nitrousHeatXger, nitrogenLine
 const uint8_t SquibA = 1;
 const uint8_t SquibB = 2;
 unsigned long startTime = millis();
+unsigned long ignitionTime;
+
+bool IGNITION = false;
 
 int functionNumber  =  -1;
 int deviceNumber = -1;
@@ -36,7 +39,7 @@ int PrintTansducerValuesSerial(PressureSensor transducers[], unsigned long timeM
 // Should log to SD too with time stamps 
 int LogTansducerValuesSD(PressureSensor transducers[], unsigned long timeMillis);
 //Creates Packets to send to Print and Log functions
-String createDataPacket(PressureSensor transducers[], unsigned long timeMillis, String lastCommand);
+String createDataPacket(PressureSensor transducers[], unsigned long timeMillis, unsigned long loadCell, String lastCommand);
 
 void setup() {
 
@@ -60,6 +63,8 @@ void setup() {
   SolenoidArray[3].initializeSolenoid(Solenoid_4, SOLENOID_ABORT,SECONDS_10); //  Nitrous Abort (J16)
   SolenoidArray[4].initializeSolenoid(Solenoid_5, SOLENOID_ABORT,SECONDS_10); //  Fuel/Nitrogen Abort (J19)
   SolenoidArray[5].initializeSolenoid(Solenoid_6, SOLENOID_ABORT,SECONDS_10); // Pyrovalve Shut Off(J20)
+
+  pinMode(Analog_Sensor_In, INPUT);
 
   pinPeripheral(Squib_MISO, PIO_SERCOM_ALT);
   pinPeripheral(Squib_SCK, PIO_SERCOM_ALT);
@@ -135,18 +140,34 @@ void loop() {
 
 
 // Sends Data packet every 5 ms
-  if((currTime-5 ) > startTime)
+  if((currTime -1) > startTime)
   {
-          data = createDataPacket(TransducerArray, currTime, lastCommand);
+          
+          unsigned long loadCell = analogRead(Analog_Sensor_In);
+          data = createDataPacket(TransducerArray, currTime, loadCell, lastCommand);
           //PrintTansducerValuesSerial(TransducerArray, currTime);
           
-
-          //make sure to uncomment this before testing 
-          Serial.println(data);
           dataFile.println(data);
+          //make sure to uncomment this before testing 
+          
+         if((currTime -5) > startTime )
+        {
+        Serial.println(data);       
+        }
+              
               
           startTime = currTime;
   }
+
+if((currTime-2000)>ignitionTime && IGNITION ==true){
+          
+          //Fires PyroValve
+          ret = Squib_Fire(CMD_FIRE_1A,SquibA);
+          ret = Squib_Fire(CMD_FIRE_1A,SquibB);
+}
+
+ 
+
 
    while (Serial.available() > 0)
     {
@@ -218,7 +239,7 @@ void loop() {
       case 4:
         //Test SD Card data
         //dataFile.println("The test Worked yeeeet");
-        dataFile.println(createDataPacket(TransducerArray, currTime, lastCommand));
+        //dataFile.println(createDataPacket(TransducerArray, currTime, loadCell, lastCommand));
         //PrintTansducerValuesSerial(TransducerArray, currTime);
       break;
 
@@ -263,8 +284,9 @@ void loop() {
         if (deviceNumber == 8)
           ret = Squib_Fire(CMD_FIRE_2B,SquibB);
         if (deviceNumber == 9){
-          ret = Squib_Fire(CMD_FIRE_1A,SquibA);
-          ret = Squib_Fire(CMD_FIRE_1A,SquibB);
+            IGNITION = true;
+            ignitionTime = millis();
+            ret = Squib_Fire(CMD_FIRE_1B,SquibA);   
         }
            //Serial.println(ret);
       }
@@ -284,6 +306,12 @@ void loop() {
       deviceNumber = -1;
       dataFile.flush();
     }// end of Switch
+
+
+
+
+
+
 } // end of loop
 
 
@@ -312,7 +340,7 @@ extern "C"
 }
 
 
-String createDataPacket(PressureSensor transducers[], unsigned long timeMillis, String lastCommand){
+String createDataPacket(PressureSensor transducers[], unsigned long timeMillis,unsigned long loadCell, String lastCommand){
     
     String out = "0, ";
     
@@ -327,7 +355,7 @@ String createDataPacket(PressureSensor transducers[], unsigned long timeMillis, 
         out = out + data +",";
        
     }
-        
+        out  = out + loadCell +',';
        out = out + timeMillis +",";
        out = out + lastCommand;
 
