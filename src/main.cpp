@@ -18,6 +18,7 @@ PressureSensor TransducerArray[]   = {nitrousLine, nitrousHeatXger, nitrogenLine
 
 const uint8_t SquibA = 1;
 const uint8_t SquibB = 2;
+const int IGNITION_DELAY = 4000;
 unsigned long startTime = millis();
 unsigned long ignitionTime;
 
@@ -159,7 +160,7 @@ void loop() {
           startTime = currTime;
   }
 
-if((currTime-2000)>ignitionTime && IGNITION ==true){
+if((currTime-IGNITION_DELAY)>ignitionTime && IGNITION ==true){
           
           //Fires PyroValve
           ret = Squib_Fire(CMD_FIRE_1A,SquibA);
