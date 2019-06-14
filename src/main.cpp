@@ -220,12 +220,12 @@ if((currTime-IGNITION_DELAY)>ignitionTime && IGNITION ==true){
           }
         }
         else if(deviceNumber == 8){
+          SolenoidArray[0].closeSolenoid();
           SolenoidArray[1].closeSolenoid();
           SolenoidArray[2].closeSolenoid();
           SolenoidArray[3].closeSolenoid();
           SolenoidArray[4].closeSolenoid();
           SolenoidArray[5].closeSolenoid();
-          SolenoidArray[6].closeSolenoid();
         }
         else
         {
