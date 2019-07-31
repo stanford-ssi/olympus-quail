@@ -31,7 +31,7 @@ String inData;
 String lastCommand ="00";
 int command;
 
-const char logFileName[] = "hotfire.txt";// Must be 8 chars or less
+const char logFileName[] = "ignition.txt";// Must be 8 chars or less
 
 SPIClass squibSPI (&sercom0, Squib_MISO, Squib_SCK, Squib_MOSI, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_2);
 
@@ -92,7 +92,7 @@ void setup() {
   Serial.println();
 
  // SD Card Init - While get stuck here if no SD
-  Serial.print("Initializing SD card...");
+  Serial.println("Initializing SD card...");
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
   pinMode(SD_Card_SS, OUTPUT);
@@ -109,7 +109,7 @@ void setup() {
   digitalWrite(LED_D2,HIGH);
   digitalWrite(LED_D3,LOW);
 
-  // Open up the file we're going to log to!
+  //Open up the file we're going to log to!
   dataFile = SD.open(logFileName, ((O_RDWR|O_APPEND))); 
   if (!dataFile) {
     Serial.println("error opening datalog.txt");
