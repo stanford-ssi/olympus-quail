@@ -134,9 +134,9 @@ static const uint8_t ATN = PIN_ATN;
  */
 #define SPI_INTERFACES_COUNT 1 //this is the SD card interface. Lord help whoever sets up the SPI sensors!
 
-#define PIN_SPI_MISO         (49u)
-#define PIN_SPI_MOSI         (47ul)
-#define PIN_SPI_SCK          (48ul)
+#define PIN_SPI_MISO         (36ul)
+#define PIN_SPI_MOSI         (34ul)
+#define PIN_SPI_SCK          (35ul)
 #define PERIPH_SPI           sercom4
 #define PAD_SPI_TX           SPI_PAD_0_SCK_1
 #define PAD_SPI_RX           SERCOM_RX_PAD_3
@@ -144,7 +144,7 @@ static const uint8_t ATN = PIN_ATN;
 static const uint8_t MOSI = PIN_SPI_MOSI ;
 static const uint8_t MISO = PIN_SPI_MISO ;
 static const uint8_t SCK  = PIN_SPI_SCK ;
-static const uint8_t SS  = 13 ;
+static const uint8_t SS  = 2 ;
 
 /*
  * Wire Interfaces
