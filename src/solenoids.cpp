@@ -4,12 +4,13 @@
     using namespace std; 
     
 
-    void Solenoids::initializeSolenoid(uint8_t solenoid_number, Solenoid_Size size)
+    void Solenoids::initializeSolenoid(uint8_t solenoid_number, Solenoid_Size size, PULSE_Length pulse_time)
     {
         this->solenoid_number =  solenoid_number;
         this->size =  size;
         this->isOpen          = false;
         this->PWM       =   SOLENOID_PWM[size];
+        this->PULSE_TIME = pulse_time;
          pinMode(this->solenoid_number, OUTPUT);
     };   
     
