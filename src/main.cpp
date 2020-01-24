@@ -2,6 +2,7 @@
 #include <pin_interface.h>
 #include <solenoids.hpp>
 #include <pressure_sensor.hpp>
+#include <loadcells.hpp>
 #include  "SD.h"
 #include "MC33797.h"
 #include <SPI.h>
@@ -23,6 +24,7 @@ unsigned long startTime = millis();
 unsigned long ignitionTime;
 
 bool IGNITION = false;
+double VBATT = 12;
 
 int functionNumber  =  -1;
 int deviceNumber = -1;
@@ -41,6 +43,10 @@ int PrintTansducerValuesSerial(PressureSensor transducers[], unsigned long timeM
 int LogTansducerValuesSD(PressureSensor transducers[], unsigned long timeMillis);
 //Creates Packets to send to Print and Log functions
 String createDataPacket(PressureSensor transducers[], unsigned long timeMillis, unsigned long loadCell, String lastCommand);
+
+// Get Battry Voltage 
+double updateVBATT();
+
 
 void setup() {
 
@@ -81,6 +87,9 @@ void setup() {
   //digitalWrite(LED_D2, HIGH);
   digitalWrite(LED_D3, HIGH);
   delay(1000);
+
+  //Read Battery Voltage and set global variable
+   updateVBATT();
  
  // Squib Init
   uint8_t ret = Squib_Init(SquibA);
@@ -144,7 +153,10 @@ void loop() {
   if((currTime -1) > startTime)
   {
           
-          unsigned long loadCell = analogRead(Analog_Sensor_In);
+          unsigned long loadCell_raw = analogRead(Analog_Sensor_In);
+
+          unsigned long loadCell = loadCell_raw * 3.3 * 1000 / (1024 * 50.1 * 0.003*12);
+
           data = createDataPacket(TransducerArray, currTime, loadCell, lastCommand);
           //PrintTansducerValuesSerial(TransducerArray, currTime);
           
@@ -415,3 +427,11 @@ int LogTansducerValuesSD(PressureSensor transducers[], unsigned long timeMillis)
         Serial.println("0");
   return 1;
 }
+double updateVBATT()
+{
+  // Gets Raw ADC Value and converts it to voltage 
+
+  // 10K and 40.2K Resistor used in 1/5 Voltage Divider
+  VBATT = analogRead(Battery_Voltage)*(5.2)*3.3/1024;
+};
+
