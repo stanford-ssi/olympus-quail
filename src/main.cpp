@@ -52,11 +52,19 @@ void setup() {
 
   // put your setup code here, to run once:
   //pinMode(Solenoid_1, OUTPUT);
-  Serial.begin(115200);
-  delay(1000);
+  
+  
+  Serial.begin(9600);
+ 
+ delay(5000);
   Serial.println("Setup Begin");
-  pinMode(LED_D2, OUTPUT);
+  
   pinMode(LED_D3, OUTPUT);
+
+  digitalWrite(LED_D3, HIGH);
+
+  
+
  
   TransducerArray[0].initializeSensor(Pressure_1,RANGE_1K,3); // Nitrous Line/Supply 3
   TransducerArray[1].initializeSensor(Pressure_2,RANGE_2K,0); // Combustion Chamber
@@ -72,10 +80,11 @@ void setup() {
   SolenoidArray[5].initializeSolenoid(Solenoid_6, SOLENOID_ABORT,SECONDS_10); // Pyrovalve Shut Off(J20)
 
   pinMode(Analog_Sensor_In, INPUT);
+  
 
-  pinPeripheral(Squib_MISO, PIO_SERCOM_ALT);
-  pinPeripheral(Squib_SCK, PIO_SERCOM_ALT);
-  pinPeripheral(Squib_MOSI, PIO_SERCOM_ALT);
+ pinPeripheral(Squib_MISO, PIO_SERCOM_ALT);
+ pinPeripheral(Squib_SCK, PIO_SERCOM_ALT);
+ pinPeripheral(Squib_MOSI, PIO_SERCOM_ALT);
 
   pinMode(Squib_SS_1, OUTPUT);
   pinMode(Squib_SS_2, OUTPUT);
@@ -84,14 +93,11 @@ void setup() {
   squibSPI.begin();
   
   
-  //digitalWrite(LED_D2, HIGH);
-  digitalWrite(LED_D3, HIGH);
-  delay(1000);
-
   //Read Battery Voltage and set global variable
-   updateVBATT();
+  // updateVBATT();
  
  // Squib Init
+ 
   uint8_t ret = Squib_Init(SquibA);
   Serial.print("Squib 1 Init: ");
   Serial.println(ret);
@@ -100,23 +106,32 @@ void setup() {
   Serial.println(ret);
   Serial.println();
 
+ //delay(100);
  // SD Card Init - While get stuck here if no SD
   Serial.print("Initializing SD card...");
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
   pinMode(SD_Card_SS, OUTPUT);
-  digitalWrite(LED_D2,HIGH);
   digitalWrite(LED_D3,LOW);
   // see if the card is present and can be initialized:
-  if (!SD.begin(SD_Card_SS, SD_Card_MOSI, SD_Card_MISO, SD_Card_SCK)) {
+  //int SDOPEN = 1;
+  
+  
+  if (!SD.begin(SD_Card_SS, SD_Card_MOSI, SD_Card_MISO, SD_Card_SCK)) 
+  {
     Serial.println("Card failed, or not present");
     // don't do anything more:
-    while (1) ;
-  }
+    while (!SD.begin(SD_Card_SS, SD_Card_MOSI, SD_Card_MISO, SD_Card_SCK))
+    {
+     delay(500);
+     Serial.println("Card failed, or not present");
+    } 
+  } 
+
   Serial.println("card initialized.");
   
-  digitalWrite(LED_D2,HIGH);
-  digitalWrite(LED_D3,LOW);
+
+  digitalWrite(LED_D3,HIGH);
 
   // Open up the file we're going to log to!
   dataFile = SD.open(logFileName, ((O_RDWR|O_APPEND))); 
@@ -131,9 +146,13 @@ void setup() {
      }
   }
   dataFile.println("Data logging for Quail has begun yeet");
+  dataFile.flush();
+
+
   Serial.println("Setup done");
+ 
   
-  
+ 
 }
 
 void loop() {
@@ -144,8 +163,8 @@ void loop() {
   uint8_t ret;
   unsigned long currTime = millis();
   String data;
-  
- //Serial.println(currTime);
+  //delay(1000);
+//  Serial.println(currTime);
 
 
 
@@ -162,14 +181,15 @@ void loop() {
           
           dataFile.println(data);
           //make sure to uncomment this before testing 
-          
+          //Serial.println(data);
          if((currTime -5) > startTime )
         {
-        Serial.println(data);       
+          Serial.println(data);
+          startTime = currTime;
         }
               
               
-          startTime = currTime;
+          
   }
 
 if((currTime-IGNITION_DELAY)>ignitionTime && IGNITION ==true){
@@ -181,7 +201,7 @@ if((currTime-IGNITION_DELAY)>ignitionTime && IGNITION ==true){
 
  
 
-
+  
    while (Serial.available() > 0)
     {
         char recieved = Serial.read();
@@ -259,9 +279,11 @@ if((currTime-IGNITION_DELAY)>ignitionTime && IGNITION ==true){
       // Log to SD Card
       case 4:
         //Test SD Card data
-        //dataFile.println("The test Worked yeeeet");
+        dataFile.println("The test Worked yeeeet");
         //dataFile.println(createDataPacket(TransducerArray, currTime, loadCell, lastCommand));
         //PrintTansducerValuesSerial(TransducerArray, currTime);
+        dataFile.flush();
+        dataFile.close();
       break;
 
       // Pulse Solenoid
@@ -322,13 +344,13 @@ if((currTime-IGNITION_DELAY)>ignitionTime && IGNITION ==true){
       break;
 
       }
-
+      
+      dataFile.flush();
       functionNumber = -1;
       deviceNumber = -1;
-      dataFile.flush();
     }// end of Switch
 
-
+   
 
 
 
@@ -433,5 +455,6 @@ double updateVBATT()
 
   // 10K and 40.2K Resistor used in 1/5 Voltage Divider
   VBATT = analogRead(Battery_Voltage)*(5.2)*3.3/1024;
+  return VBATT;
 };
 
