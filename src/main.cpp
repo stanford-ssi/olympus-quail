@@ -42,7 +42,7 @@ int PrintTansducerValuesSerial(PressureSensor transducers[], unsigned long timeM
 // Should log to SD too with time stamps 
 int LogTansducerValuesSD(PressureSensor transducers[], unsigned long timeMillis);
 //Creates Packets to send to Print and Log functions
-String createDataPacket(PressureSensor transducers[], unsigned long timeMillis, unsigned long loadCell, String lastCommand);
+String createDataPacket(PressureSensor transducers[], Solenoids solenoids[], unsigned long timeMillis, unsigned long loadCell, String lastCommand);
 
 // Get Battry Voltage 
 double updateVBATT();
@@ -176,12 +176,12 @@ void loop() {
 
           unsigned long loadCell = loadCell_raw * 3.3 * 1000 / (1024 * 50.1 * 0.003*12);
 
-          data = createDataPacket(TransducerArray, currTime, loadCell, lastCommand);
+          data = createDataPacket(TransducerArray, SolenoidArray, currTime, loadCell, lastCommand);
           //PrintTansducerValuesSerial(TransducerArray, currTime);
           
           dataFile.println(data);
           //make sure to uncomment this before testing 
-          //Serial.println(data);
+          // Serial.println(data);
          if((currTime -5) > startTime )
         {
           Serial.println(data);
@@ -383,24 +383,25 @@ extern "C"
 }
 
 
-String createDataPacket(PressureSensor transducers[], unsigned long timeMillis,unsigned long loadCell, String lastCommand){
-    
-    String out = "0, ";
-    
+String createDataPacket(PressureSensor transducers[], Solenoids solenoids[], unsigned long timeMillis,unsigned long loadCell, String lastCommand){
+    // Format: time (msec), CH1, CH2, ... , CH6 = loadcell, SOL1, SOL2, ..., SOL6, last command, 0 \n
+    String out = "";
+    out = out + timeMillis +",";
       
-      for(int i =0; i<5; i++)
+    for(int i =0; i<5; i++)
     {
-       data = transducers[i].readSensor();
-
-        if (data>2000 || data<-200)
-            data = -1;
-
-        out = out + data +",";
-       
+      data = transducers[i].readSensor();
+      if (data>2000 || data<-200)
+        data = -1;
+      out = out + data +",";
     }
-        out  = out + loadCell +',';
-       out = out + timeMillis +",";
-       out = out + lastCommand;
+    out  = out + loadCell +',';  
+    for(int i =0; i<6; i++)
+    {
+      status = solenoids[i].getSolenoidStatus();
+      out = out + status + ",";
+    }
+    out = out + lastCommand + ', 0 ';
 
  return out;
 }

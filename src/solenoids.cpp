@@ -11,7 +11,7 @@
         this->isOpen          = false;
         this->PWM       =   SOLENOID_PWM[size];
         this->PULSE_TIME = pulse_time;
-         pinMode(this->solenoid_number, OUTPUT);
+        pinMode(this->solenoid_number, OUTPUT);
     };   
     
     int Solenoids::openSolenoid()
@@ -34,7 +34,7 @@
 
     bool Solenoids::getSolenoidStatus()
     {
-        return isOpen;
+        return (int)isOpen;
     };
 
     int Solenoids::pulseSolenoid()
@@ -45,6 +45,5 @@
         delay(PULSE_TIME);
         analogWrite(this->solenoid_number, (int)0);
         return 1;
-
     };
 
